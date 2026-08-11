@@ -14,6 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use function Laravel\Prompts\intro;
 use function Laravel\Prompts\note;
 use function Laravel\Prompts\outro;
+use function Laravel\Prompts\warning;
 
 #[AsCommand(
     name: 'install',
@@ -41,6 +42,8 @@ final class InstallCommand extends Command
         $cwd = (string) getcwd();
 
         intro('fullsystem/install');
+
+        warning('Under development. Expect breaking changes between versions.');
 
         note("Project: {$cwd}\nTheme:   {$theme}");
 

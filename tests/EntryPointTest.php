@@ -12,6 +12,10 @@ it('runs the installer when no command is given', function () {
         ->and($tester->getDisplay())->toContain('fullsystem/install');
 });
 
+it('warns that the package is under development', function () {
+    expect(cli([])->getDisplay())->toContain('Under development');
+});
+
 it('still answers to the init alias', function () {
     expect(cli(['command' => 'init'])->getStatusCode())->toBe(Command::SUCCESS);
 });
