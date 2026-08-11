@@ -1,0 +1,61 @@
+{
+    "name": "fullsystem/install",
+    "description": "Replace the Laravel starter kit frontend with your own UI repository.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "installer",
+        "frontend",
+        "shadcn"
+    ],
+    "authors": [
+        {
+            "name": "Renato",
+            "email": "renatotkd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "laravel/prompts": "^0.3.21",
+        "symfony/console": "^7.4|^8.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29",
+        "pestphp/pest": "^4.0",
+        "phpstan/phpstan": "^2.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "FullSystem\\Install\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/fullsystem"
+    ],
+    "scripts": {
+        "analyse": "phpstan analyse",
+        "lint": "pint --parallel",
+        "lint:check": "pint --parallel --test",
+        "test:unit": "pest",
+        "test": [
+            "@analyse",
+            "@lint:check",
+            "@test:unit"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
