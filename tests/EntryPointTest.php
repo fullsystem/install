@@ -16,10 +16,14 @@ it('still answers to the init alias', function () {
     expect(cli(['command' => 'init'])->getStatusCode())->toBe(Command::SUCCESS);
 });
 
-it('installs fullsystem/starter-kit by default', function () {
-    expect(cli([])->getDisplay())->toContain(InstallCommand::DEFAULT_REPOSITORY);
+it('installs fullsystem/starter by default', function () {
+    expect(cli([])->getDisplay())->toContain(InstallCommand::DEFAULT_THEME);
 });
 
-it('accepts another repository', function () {
-    expect(cli(['--repository' => 'acme/theme'])->getDisplay())->toContain('acme/theme');
+it('accepts another theme', function () {
+    expect(cli(['--theme' => 'laravel/starter-kit'])->getDisplay())->toContain('laravel/starter-kit');
+});
+
+it('accepts the -t shortcut', function () {
+    expect(cli(['-t' => 'laravel/starter-kit'])->getDisplay())->toContain('laravel/starter-kit');
 });

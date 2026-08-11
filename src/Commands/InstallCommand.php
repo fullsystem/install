@@ -17,16 +17,18 @@ use function Laravel\Prompts\outro;
 
 #[AsCommand(
     name: 'install',
-    description: 'Replace the Laravel starter kit frontend with your own UI repository.',
+    description: 'Replace the Laravel starter kit frontend with a theme.',
     aliases: ['init'],
 )]
 final class InstallCommand extends Command
 {
-    public const DEFAULT_REPOSITORY = 'fullsystem/starter-kit';
+    public const DEFAULT_THEME = 'fullsystem/starter';
 
     protected function configure(): void
     {
-        $this->addOption('repository', 'r', InputOption::VALUE_REQUIRED, 'UI repository to install', self::DEFAULT_REPOSITORY);
+        // Options only, never positional arguments: once `login` and friends
+        // exist, a positional would be read as a command name.
+        $this->addOption('theme', 't', InputOption::VALUE_REQUIRED, 'Theme to install', self::DEFAULT_THEME);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -35,12 +37,12 @@ final class InstallCommand extends Command
 
         Prompt::interactive($input->isInteractive() && stream_isatty(STDIN));
 
+        $theme = (string) $input->getOption('theme');
         $cwd = (string) getcwd();
-        $repository = (string) $input->getOption('repository');
 
         intro('fullsystem/install');
 
-        note("Project:    {$cwd}\nRepository: {$repository}");
+        note("Project: {$cwd}\nTheme:   {$theme}");
 
         outro('Nothing to do yet.');
 
