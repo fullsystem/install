@@ -2,6 +2,10 @@
 > prints what it would target. None of the steps below are implemented yet —
 > this README describes the shape being built, and the pipeline it documents
 > is the one from the npx package it replaces.
+>
+> There is no tagged release yet, so cpx cannot resolve a stable version.
+> Until the first tag, ask for the branch explicitly:
+> `cpx fullsystem/install:dev-main`.
 
 > This deletes files. It is built for a project fresh out of `laravel new`,
 > where the starter kit frontend is still untouched. On a project with real
@@ -20,34 +24,33 @@ the kit left behind. This does.
 cpx fullsystem/install
 ```
 
-That installs `https://github.com/fullsystem/starter-kit`. To install a
-different one:
+That installs the `fullsystem/starter` theme. To install a different one:
 
 ```bash
-cpx fullsystem/install --repository=your/ui
+cpx fullsystem/install --theme=laravel/starter-kit
 ```
 
-Runs in the root of a Laravel project. Everything it does is declared by a UI
-repository, so the same command can install any frontend.
+Runs in the root of a Laravel project. Everything it does is declared by the
+theme, so the same command can install any frontend.
 
 ## What it does
 
 | step | |
 |---|---|
-| `fetch` | clones the UI repository and reads its `schema.json` |
-| `composer` | installs the PHP packages the repository declares |
-| `npm` | installs the JS packages the repository declares |
+| `fetch` | clones the theme and reads its `schema.json` |
+| `composer` | installs the PHP packages the theme declares |
+| `npm` | installs the JS packages the theme declares |
 | `strip` | removes the starter kit files |
 | `shadcn` | runs `shadcn init` and `add` with the declared preset |
-| `copy` | copies the repository's files over the project |
-| `artisan` | runs the artisan commands the repository declares |
+| `copy` | copies the theme's files over the project |
+| `artisan` | runs the artisan commands the theme declares |
 | `verify` | runs the build, rolling back if it fails |
 
 Dependencies install before `strip` because `composer` boots the application
 to discover packages, which fails once routes are gone. `copy` runs after
 `shadcn` so generated `ui/` components cannot overwrite files shipped by the
-repository. `artisan` runs after `copy` because the files it acts on are
-usually the ones just copied in.
+theme. `artisan` runs after `copy` because the files it acts on are usually
+the ones just copied in.
 
 The whole `schema.json` is validated during `fetch`, before anything is
 written. An unlisted artisan command or a path escaping the project root
@@ -97,20 +100,23 @@ so they stop the run unless `--force` said yes up front.
 
 | | |
 |---|---|
-| `--repository=<owner/repo>`, `-r` | UI repository to install. Defaults to `fullsystem/starter-kit`. |
+| `--theme=<owner/repo>`, `-t` | Theme to install. Defaults to `fullsystem/starter`. |
 | `--dry-run` | Prints the plan without writing anything. |
 | `--force`, `-f` | Answers yes to the risk checks up front. |
 | `--no-interaction`, `-n` | Never asks. Every question resolves to its default. |
 
-Run `--dry-run` before installing an unfamiliar repository — it lists every
-file that will be deleted.
+Everything is an option; nothing is positional. A positional argument would
+be read as a command name.
 
-## Writing a UI repository
+Run `--dry-run` before installing an unfamiliar theme — it lists every file
+that will be deleted.
+
+## Writing a theme
 
 A `schema.json` in the root and a directory of files:
 
 ```
-your-ui/
+your-theme/
 ├── schema.json
 └── files/
     ├── routes/web.php
@@ -122,11 +128,11 @@ your-ui/
 
 `files/` mirrors the project root, so `files/resources/js/app.tsx` lands at
 `resources/js/app.tsx`. No path mapping. Anything outside `files/` — README,
-licence, CI config — stays in the repository.
+licence, CI config — stays in the theme's repository.
 
 ```json
 {
-  "name": "your/ui",
+  "name": "your/theme",
   "shadcn": {
     "preset": "vega",
     "template": "laravel",
@@ -152,8 +158,8 @@ licence, CI config — stays in the repository.
 }
 ```
 
-Every field is optional. A repository that only replaces pages can declare
-nothing but `source`, and even that defaults to `files`.
+Every field is optional. A theme that only replaces pages can declare nothing
+but `source`, and even that defaults to `files`.
 
 ### shadcn
 
@@ -176,7 +182,7 @@ The step always passes `-f -y --reinstall`, so it never prompts.
 Package names are validated for format before being passed to the installer.
 That prevents argument injection — a "package" named `--ignore-platform-reqs`
 would otherwise be read as a flag — but it does not make an unknown package
-safe. That trust comes from choosing the repository.
+safe. That trust comes from choosing the theme.
 
 Some packages need more than installation. `laravel/reverb`, for example, has
 its own `php artisan reverb:install` that publishes config and writes
@@ -251,9 +257,10 @@ by types. If you replace `pages/auth` while keeping Fortify's controllers, a
 change on either side compiles fine and fails at runtime. Pin the starter kit
 commit you derived from and diff it when the kit updates.
 
-**Private repositories are not supported.** Terminal prompts are disabled
-during clone so a missing repository fails immediately instead of hanging on
-a credential prompt.
+**Private themes are not supported yet.** Terminal prompts are disabled
+during clone, so a theme you cannot reach fails immediately instead of
+hanging on a credential prompt. Authenticating for exclusive themes is what
+`login` will be for.
 
 **Rollback restores tracked files only.** `node_modules` is not tracked by
 git, so after a failed run it holds packages the restored `package.json` no
