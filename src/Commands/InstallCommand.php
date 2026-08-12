@@ -83,11 +83,9 @@ final class InstallCommand
 
         warning('Under development. Expect breaking changes between versions.');
 
-        $cwd = realpath($path);
+        $cwd = $this->directory($path, $dryRun, $output);
 
-        if ($cwd === false || ! is_dir($cwd)) {
-            error("Not a directory: {$path}");
-
+        if ($cwd === null) {
             return Command::FAILURE;
         }
 
@@ -226,6 +224,54 @@ final class InstallCommand
         outro("Applied to {$origin}.");
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * The directory to install into, created if it is missing.
+     *
+     * Only the last level: `install ./app` in a directory that exists creates
+     * `app`, while `install ./a/b/c` with no `a` is a typo far more often than
+     * it is an intention, and building the whole path would hide it.
+     */
+    private function directory(string $path, bool $dryRun, OutputInterface $output): ?string
+    {
+        $resolved = realpath($path);
+
+        if ($resolved !== false) {
+            if (is_dir($resolved)) {
+                return $resolved;
+            }
+
+            error("Not a directory: {$path}");
+
+            return null;
+        }
+
+        $parent = realpath(dirname($path));
+
+        if ($parent === false || ! is_dir($parent)) {
+            error("Cannot create {$path}: there is no ".dirname($path).' to create it in.');
+
+            return null;
+        }
+
+        if ($dryRun) {
+            $output->writeln("  <comment>would create {$path}</comment>");
+
+            error("{$path} does not exist yet, so there is nothing here to install into.");
+
+            return null;
+        }
+
+        if (! mkdir($parent.'/'.basename($path), 0755)) {
+            error("Could not create {$path}.");
+
+            return null;
+        }
+
+        $output->writeln("  <info>✓</info> created <options=bold>{$path}</>");
+
+        return realpath($path) ?: null;
     }
 
     /**
