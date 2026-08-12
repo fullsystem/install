@@ -46,14 +46,6 @@ final class ActionRegistry
     }
 
     /**
-     * Forgets the cache. Only tests need this.
-     */
-    public static function refresh(): void
-    {
-        self::$handlers = null;
-    }
-
-    /**
      * @return array<string, class-string<Handler>>
      */
     private static function discover(): array
