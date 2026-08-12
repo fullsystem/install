@@ -17,8 +17,16 @@ function cli(array $argv = []): ApplicationTester
     $application->setAutoExit(false);
     $application->setCatchExceptions(false);
 
+    // ApplicationTester takes structured input, so it never passes through
+    // Application::route() — that path is covered by RoutingTest. Naming the
+    // command here is what the routing would have done with real argv.
+    // ArrayInput::getFirstArgument() reads the array in order, so the command
+    // has to come first or Symfony reads an argument as the command name.
+    $command = $argv['command'] ?? 'install';
+    unset($argv['command']);
+
     $tester = new ApplicationTester($application);
-    $tester->run($argv, ['interactive' => false]);
+    $tester->run(array_merge(['command' => $command], $argv), ['interactive' => false]);
 
     return $tester;
 }
