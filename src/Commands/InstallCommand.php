@@ -10,6 +10,7 @@ use FullSystem\Install\Checks\Check;
 use FullSystem\Install\Context;
 use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
+use FullSystem\Install\RestorePoint;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\ProcessRunner;
@@ -132,19 +133,61 @@ final class InstallCommand
             return Command::SUCCESS;
         }
 
+        $point = new RestorePoint;
+
+        if (! $context->dryRun) {
+            $established = $point->establish($context);
+
+            if (! $established->ok) {
+                error((string) $established->reason);
+
+                return Command::FAILURE;
+            }
+
+            $output->writeln('  <info>✓</info> restore point at <options=bold>'.RestorePoint::NAME.'</>');
+        }
+
         $result = (new Executor($output, $this->processes))->run($plan, $context);
 
         if (! $result->ok) {
             error((string) $result->reason);
 
+            if (! $context->dryRun) {
+                $this->rollBack($point, $context, $output);
+            }
+
             return Command::FAILURE;
         }
 
-        outro($context->dryRun
-            ? 'Dry run. Nothing was written.'
-            : 'Done — but copying the theme files is not wired yet.');
+        if ($context->dryRun) {
+            outro('Dry run. Nothing was written.');
+
+            return Command::SUCCESS;
+        }
+
+        note("Review with:  git diff\nUndo it all:  ".$point->undoCommand());
+
+        outro('Done — but copying the theme files is not wired yet.');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * A failed run leaves the project mid-transformation, which is worse than
+     * either end of it. Nothing is ever pushed, so this only ever undoes what
+     * happened locally.
+     */
+    private function rollBack(RestorePoint $point, Context $context, OutputInterface $output): void
+    {
+        $output->writeln('');
+
+        if ($point->restore($context)) {
+            $output->writeln('  <comment>rolled back to '.RestorePoint::NAME.'</comment>');
+
+            return;
+        }
+
+        $output->writeln('  <comment>could not roll back. Undo it by hand: '.$point->undoCommand().'</comment>');
     }
 
     private function fetch(string $theme): Schema

@@ -60,6 +60,10 @@ function laravelProject(): string
     file_put_contents($path.'/composer.json', '{}');
     file_put_contents($path.'/package.json', '{"dependencies":{"@inertiajs/react":"^3.6.1"}}');
 
+    // Real Laravel projects ship one, and without it the installer refuses to
+    // make the first commit rather than putting .env into the history.
+    file_put_contents($path.'/.gitignore', "/vendor\n/node_modules\n.env\n");
+
     register_shutdown_function(static function () use ($path): void {
         is_dir($path) && exec('rm -rf '.escapeshellarg($path));
     });

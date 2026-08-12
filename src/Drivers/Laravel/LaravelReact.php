@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FullSystem\Install\Drivers\Laravel;
 
 use FullSystem\Install\Actions\ActionRegistry;
+use FullSystem\Install\Checks\CleanWorktree;
 use FullSystem\Install\Checks\FreshProject;
 use FullSystem\Install\Context;
 use FullSystem\Install\Drivers\Driver;
@@ -49,8 +50,7 @@ final class LaravelReact implements Driver
     public function checks(): array
     {
         return [
-            // clean-worktree   there is a commit to roll back to — arrives with
-            //                  the actions that can shell out to git
+            new CleanWorktree,
         ];
     }
 
