@@ -22,9 +22,13 @@ use FullSystem\Install\Support\Git;
  */
 final class Workspace
 {
+    /**
+     * Not a work branch — a marker for the commit the project was on. It gets
+     * no type prefix because there is no work on it.
+     */
     public const string RESTORE_POINT = 'fullsystem/pre-install';
 
-    public const string WORK_BRANCH = 'fullsystem/install';
+    public const string WORK_BRANCH = 'feat/fullsystem-install';
 
     /**
      * Conventional Commits, because it is the format most likely to fit a
