@@ -6,28 +6,30 @@ use FullSystem\Install\Commands\InstallCommand;
 use Symfony\Component\Console\Command\Command;
 
 it('runs the installer when no command is given', function () {
-    $tester = cli([]);
-
-    expect($tester->getStatusCode())->toBe(Command::SUCCESS)
-        ->and($tester->getDisplay())->toContain('fullsystem/install');
+    expect(cli(['path' => laravelProject()])->getDisplay())->toContain('fullsystem/install');
 });
 
 it('warns that the package is under development', function () {
-    expect(cli([])->getDisplay())->toContain('Under development');
+    expect(cli(['path' => laravelProject()])->getDisplay())->toContain('Under development');
 });
 
 it('still answers to the init alias', function () {
-    expect(cli(['command' => 'init'])->getStatusCode())->toBe(Command::SUCCESS);
+    $tester = cli(['command' => 'init', 'path' => laravelProject()]);
+
+    expect($tester->getStatusCode())->toBe(Command::SUCCESS);
 });
 
 it('installs fullsystem/starter by default', function () {
-    expect(cli([])->getDisplay())->toContain(InstallCommand::DEFAULT_THEME);
+    expect(cli(['path' => laravelProject()])->getDisplay())
+        ->toContain(InstallCommand::DEFAULT_THEME);
 });
 
 it('accepts another theme', function () {
-    expect(cli(['--theme' => 'laravel/starter-kit'])->getDisplay())->toContain('laravel/starter-kit');
+    expect(cli(['path' => laravelProject(), '--theme' => 'laravel/starter-kit'])->getDisplay())
+        ->toContain('laravel/starter-kit');
 });
 
 it('accepts the -t shortcut', function () {
-    expect(cli(['-t' => 'laravel/starter-kit'])->getDisplay())->toContain('laravel/starter-kit');
+    expect(cli(['path' => laravelProject(), '-t' => 'laravel/starter-kit'])->getDisplay())
+        ->toContain('laravel/starter-kit');
 });
