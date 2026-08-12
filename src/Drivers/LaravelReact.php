@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FullSystem\Install\Drivers;
 
+use FullSystem\Install\Actions\ActionRegistry;
 use FullSystem\Install\Checks\FreshProject;
 use FullSystem\Install\Context;
 
@@ -60,13 +61,12 @@ final class LaravelReact implements Driver
     }
 
     /**
-     * composer   `composer require`, with the dev modifier
-     * packages   the JS dependencies, through whichever manager the project
-     *            already uses — the lockfile decides, not the theme
-     * remove     delete paths, validated against the project root
-     * shadcn     `shadcn init` and `add`; the reason a Vue driver could not
-     *            accept the same schema
-     * artisan    `php artisan …`
+     * Everything the package ships handlers for.
+     *
+     * This driver happens to support all of them. A driver that does not —
+     * laravel-vue has no shadcn to run — has to narrow this list, otherwise it
+     * accepts a schema it cannot execute and hands back a project missing what
+     * the theme assumed.
      *
      * Copying source over the project and proving the result builds are the
      * driver's own; a theme does not declare them.
@@ -75,6 +75,6 @@ final class LaravelReact implements Driver
      */
     public function actions(): array
     {
-        return ['composer', 'packages', 'remove', 'shadcn', 'artisan'];
+        return ActionRegistry::names();
     }
 }
