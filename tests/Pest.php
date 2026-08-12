@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use FullSystem\Install\Application;
+use FullSystem\Install\Commands\InstallCommand;
+use FullSystem\Install\Themes\ThemeSource;
 use Symfony\Component\Console\Tester\ApplicationTester;
+use Tests\Support\FakeThemeSource;
 
 /**
  * Runs the CLI the way cpx does — through the application, not the command —
@@ -11,6 +14,22 @@ use Symfony\Component\Console\Tester\ApplicationTester;
  *
  * @param  list<string>  $argv
  */
+/**
+ * An empty directory under the system temp dir, removed after the test.
+ */
+function tempDirectory(): string
+{
+    $path = sys_get_temp_dir().'/fullsystem-test-'.bin2hex(random_bytes(6));
+
+    mkdir($path, 0755, true);
+
+    register_shutdown_function(static function () use ($path): void {
+        is_dir($path) && exec('rm -rf '.escapeshellarg($path));
+    });
+
+    return $path;
+}
+
 /**
  * The smallest tree LaravelReact::detect() recognises: artisan and
  * composer.json for the backend, the Inertia adapter for the variant.
@@ -31,9 +50,11 @@ function laravelProject(): string
     return $path;
 }
 
-function cli(array $argv = []): ApplicationTester
+function cli(array $argv = [], ?ThemeSource $themes = null): ApplicationTester
 {
-    $application = new Application;
+    // Never the real GitHub: tests must not depend on the network, and the
+    // command's job here is what it does with the schema, not how it got it.
+    $application = new Application(new InstallCommand($themes ?? FakeThemeSource::returning()));
     $application->setAutoExit(false);
     $application->setCatchExceptions(false);
 

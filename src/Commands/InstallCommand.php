@@ -8,7 +8,14 @@ use FullSystem\Install\Context;
 use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
 use FullSystem\Install\Result;
+use FullSystem\Install\Schema\InvalidSchema;
+use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Steps\Step;
+use FullSystem\Install\Themes\DownloadFailed;
+use FullSystem\Install\Themes\GitHubSource;
+use FullSystem\Install\Themes\InvalidArchive;
+use FullSystem\Install\Themes\InvalidTheme;
+use FullSystem\Install\Themes\ThemeSource;
 use Laravel\Prompts\Prompt;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,6 +29,7 @@ use function Laravel\Prompts\error;
 use function Laravel\Prompts\intro;
 use function Laravel\Prompts\note;
 use function Laravel\Prompts\outro;
+use function Laravel\Prompts\spin;
 use function Laravel\Prompts\warning;
 
 /**
@@ -40,6 +48,8 @@ final class InstallCommand
 
     /** The phases, in the only order they make sense. */
     private const array PHASES = ['pre-install', 'install', 'post-install'];
+
+    public function __construct(private readonly ThemeSource $themes = new GitHubSource) {}
 
     public function __invoke(
         InputInterface $input,
@@ -88,7 +98,26 @@ final class InstallCommand
             return Command::FAILURE;
         }
 
+        try {
+            $schema = $this->fetch($theme);
+        } catch (InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
+            error($exception->getMessage());
+
+            return Command::FAILURE;
+        }
+
+        note(implode("\n", array_filter([
+            'Theme:   '.($schema->name ?? $theme),
+            $schema->version !== null ? "Version: {$schema->version}" : null,
+            'Phases:  '.($schema->phases === [] ? 'none declared' : implode(', ', array_keys($schema->phases))),
+        ])));
+
         return $this->runPhases($driver, $context, $output);
+    }
+
+    private function fetch(string $theme): Schema
+    {
+        return spin(fn (): Schema => $this->themes->fetch($theme), "Fetching {$theme}");
     }
 
     /**

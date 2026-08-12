@@ -16,11 +16,15 @@ final class Application extends ConsoleApplication
 
     private const string DEFAULT_COMMAND = 'install';
 
-    public function __construct()
+    /**
+     * The command is injectable so tests can hand it a theme source that does
+     * not reach the network.
+     */
+    public function __construct(?InstallCommand $install = null)
     {
         parent::__construct('fullsystem/install', self::VERSION);
 
-        $this->addCommand(new InstallCommand);
+        $this->addCommand($install ?? new InstallCommand);
 
         $this->setDefaultCommand(self::DEFAULT_COMMAND);
     }
