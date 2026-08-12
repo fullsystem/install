@@ -53,32 +53,22 @@ final class LaravelReact implements Driver
         ];
     }
 
-    public function preInstall(): array
+    /**
+     * composer   `composer require`, with the dev modifier
+     * packages   the JS dependencies, through whichever manager the project
+     *            already uses — the lockfile decides, not the theme
+     * remove     delete paths, validated against the project root
+     * shadcn     `shadcn init` and `add`; the reason a Vue driver could not
+     *            accept the same schema
+     * artisan    `php artisan …`
+     *
+     * Copying source over the project and proving the result builds are the
+     * driver's own; a theme does not declare them.
+     *
+     * @return list<string>
+     */
+    public function actions(): array
     {
-        return [
-            // fetch      download the theme archive, validate the whole schema
-            // composer   before strip: composer boots the app to discover
-            //            packages, and that fails once the routes are gone
-            // npm        before shadcn: both write to package.json
-        ];
-    }
-
-    public function install(): array
-    {
-        return [
-            // strip      remove what the theme declares, plus the base set
-            // shadcn     init and add with the declared preset
-            // copy       after shadcn, so generated ui/ cannot overwrite the
-            //            files the theme ships
-        ];
-    }
-
-    public function postInstall(): array
-    {
-        return [
-            // artisan    after copy: the files it acts on are the ones just
-            //            copied in (wayfinder reads the new routes)
-            // verify     npm install, then build; rolls back if it fails
-        ];
+        return ['composer', 'packages', 'remove', 'shadcn', 'artisan'];
     }
 }

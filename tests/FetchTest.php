@@ -20,20 +20,25 @@ it('asks the source for the theme it was given', function () {
 
 it('reports what the theme declares', function () {
     $source = FakeThemeSource::returning(new Schema('acme/theme', '2.1.0', [
-        'pre-install' => [], 'post-install' => [],
+        'pre-install' => [['composer' => ['laravel/reverb']]],
+        'post-install' => [['artisan' => ['migrate']]],
     ]));
 
     $display = cli(['path' => laravelProject()], $source)->getDisplay();
 
     expect($display)->toContain('acme/theme')
         ->and($display)->toContain('2.1.0')
-        ->and($display)->toContain('pre-install, post-install');
+        ->and($display)->toContain('pre-install')
+        ->and($display)->toContain('composer')
+        ->and($display)->toContain('post-install')
+        ->and($display)->toContain('artisan');
 });
 
-it('says so when the theme declares no phases', function () {
+it('says so when the theme declares nothing', function () {
     $source = FakeThemeSource::returning(new Schema('acme/theme', null, []));
 
-    expect(cli(['path' => laravelProject()], $source)->getDisplay())->toContain('none declared');
+    expect(cli(['path' => laravelProject()], $source)->getDisplay())
+        ->toContain('declares no actions');
 });
 
 it('stops on anything that goes wrong while fetching', function (RuntimeException $failure) {

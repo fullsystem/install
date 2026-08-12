@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace FullSystem\Install\Commands;
 
+use FullSystem\Install\Actions\Plan;
 use FullSystem\Install\Context;
 use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
-use FullSystem\Install\Result;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
-use FullSystem\Install\Steps\Step;
 use FullSystem\Install\Themes\DownloadFailed;
 use FullSystem\Install\Themes\GitHubSource;
 use FullSystem\Install\Themes\InvalidArchive;
@@ -46,9 +45,6 @@ final class InstallCommand
 {
     public const string DEFAULT_THEME = 'fullsystem/starter';
 
-    /** The phases, in the only order they make sense. */
-    private const array PHASES = ['pre-install', 'install', 'post-install'];
-
     public function __construct(private readonly ThemeSource $themes = new GitHubSource) {}
 
     public function __invoke(
@@ -63,6 +59,9 @@ final class InstallCommand
 
         #[Option(description: 'Answer yes to the risk checks up front')]
         bool $force = false,
+
+        #[Option(description: 'Print the plan without writing anything', name: 'dry-run')]
+        bool $dryRun = false,
     ): int {
         Prompt::setOutput($output);
 
@@ -80,7 +79,7 @@ final class InstallCommand
             return Command::FAILURE;
         }
 
-        $context = new Context(cwd: $cwd, theme: $theme, force: $force);
+        $context = new Context(cwd: $cwd, theme: $theme, dryRun: $dryRun, force: $force);
 
         $registry = DriverRegistry::default();
         $driver = $registry->detect($context);
@@ -109,10 +108,56 @@ final class InstallCommand
         note(implode("\n", array_filter([
             'Theme:   '.($schema->name ?? $theme),
             $schema->version !== null ? "Version: {$schema->version}" : null,
-            'Phases:  '.($schema->phases === [] ? 'none declared' : implode(', ', array_keys($schema->phases))),
         ])));
 
-        return $this->runPhases($driver, $context, $output);
+        try {
+            $plan = Plan::from($schema, $driver->actions());
+        } catch (InvalidSchema $exception) {
+            error($exception->getMessage());
+
+            return Command::FAILURE;
+        }
+
+        $this->showPlan($plan, $output);
+
+        if ($context->dryRun) {
+            outro('Dry run. Nothing was written.');
+
+            return Command::SUCCESS;
+        }
+
+        outro('No action runs yet.');
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * The plan is printed on every run, not only with --dry-run: this command
+     * deletes files, and what it is about to do should never be a surprise.
+     */
+    private function showPlan(Plan $plan, OutputInterface $output): void
+    {
+        if ($plan->isEmpty()) {
+            $output->writeln(['', '  <comment>The theme declares no actions.</comment>']);
+
+            return;
+        }
+
+        foreach (Plan::PHASES as $phase) {
+            $actions = $plan->actions($phase);
+
+            if ($actions === []) {
+                continue;
+            }
+
+            $output->writeln(['', "  <info>{$phase}</info>"]);
+
+            foreach ($actions as $index => $action) {
+                $output->writeln(sprintf('    %d. %-9s %s', $index + 1, $action->name, $action->summary()));
+            }
+        }
+
+        $output->writeln('');
     }
 
     private function fetch(string $theme): Schema
@@ -161,53 +206,5 @@ final class InstallCommand
         }
 
         return true;
-    }
-
-    /**
-     * Each phase runs to completion before the next one starts, and the first
-     * failure stops everything. Recovery belongs to the step that knows
-     * whether the result works, not here.
-     */
-    private function runPhases(Driver $driver, Context $context, OutputInterface $output): int
-    {
-        $ran = 0;
-
-        foreach (self::PHASES as $phase) {
-            foreach ($this->stepsFor($driver, $phase) as $step) {
-                $output->writeln(['', "  <info>→ {$step->name()}</info>"]);
-
-                $result = $step->run($context);
-                $ran++;
-
-                if (! $result->ok) {
-                    error("{$phase} · {$step->name()}: {$result->reason}");
-
-                    return Command::FAILURE;
-                }
-            }
-        }
-
-        if ($ran === 0) {
-            outro("No steps are wired to {$driver->name()} yet.");
-
-            return Command::SUCCESS;
-        }
-
-        outro('Done.');
-
-        return Command::SUCCESS;
-    }
-
-    /**
-     * @return list<Step>
-     */
-    private function stepsFor(Driver $driver, string $phase): array
-    {
-        return match ($phase) {
-            'pre-install' => $driver->preInstall(),
-            'install' => $driver->install(),
-            'post-install' => $driver->postInstall(),
-            default => [],
-        };
     }
 }

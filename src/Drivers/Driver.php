@@ -6,7 +6,6 @@ namespace FullSystem\Install\Drivers;
 
 use FullSystem\Install\Checks\Check;
 use FullSystem\Install\Context;
-use FullSystem\Install\Steps\Step;
 
 /**
  * A kind of installation, not a framework: `laravel-react` and `laravel-vue`
@@ -41,24 +40,13 @@ interface Driver
     public function checks(): array;
 
     /**
-     * Everything that prepares the ground and touches nothing the user owns.
+     * The actions a theme may declare, by name.
      *
-     * @return list<Step>
-     */
-    public function preInstall(): array;
-
-    /**
-     * The transformation itself. This is the driver's own; a theme adds to the
-     * phases around it, not to this one.
+     * A theme asking for something absent from this list is refused: a driver
+     * without shadcn cannot quietly skip it and hand back a project missing
+     * the components the theme assumed.
      *
-     * @return list<Step>
+     * @return list<string>
      */
-    public function install(): array;
-
-    /**
-     * What runs once the files are in place, ending with the proof it builds.
-     *
-     * @return list<Step>
-     */
-    public function postInstall(): array;
+    public function actions(): array;
 }
