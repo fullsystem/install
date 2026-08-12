@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace FullSystem\Install\Actions;
 
-use FilesystemIterator;
 use FullSystem\Install\Context;
 use FullSystem\Install\Result;
+use FullSystem\Install\Support\Filesystem;
 use FullSystem\Install\Support\SafePath;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 /**
  * Deletes paths the theme declares.
@@ -53,33 +51,9 @@ final class Remove implements Handler
         }
 
         foreach ($existing as $path) {
-            $this->delete($context->path($path));
+            Filesystem::delete($context->path($path));
         }
 
         return Result::ok('removed '.count($existing).' path(s)');
-    }
-
-    private function delete(string $path): void
-    {
-        if (is_link($path) || is_file($path)) {
-            unlink($path);
-
-            return;
-        }
-
-        if (! is_dir($path)) {
-            return;
-        }
-
-        $items = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($items as $item) {
-            $item->isDir() && ! $item->isLink() ? rmdir($item->getPathname()) : unlink($item->getPathname());
-        }
-
-        rmdir($path);
     }
 }

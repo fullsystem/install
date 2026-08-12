@@ -53,7 +53,9 @@ final class FakeThemeSource implements ThemeSource
      */
     private static function emptyTheme(string $source): string
     {
-        $path = sys_get_temp_dir().'/fullsystem-theme-'.bin2hex(random_bytes(6));
+        // Not the production prefix: a test asserting the real one leaves
+        // nothing behind should not be measuring the fake's own leftovers.
+        $path = sys_get_temp_dir().'/fullsystem-faketheme-'.bin2hex(random_bytes(6));
 
         mkdir($path.'/'.$source.'/resources/js', 0755, true);
         file_put_contents($path.'/'.$source.'/resources/js/app.tsx', '// from the theme');

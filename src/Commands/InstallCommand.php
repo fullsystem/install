@@ -128,6 +128,26 @@ final class InstallCommand
             return Command::FAILURE;
         }
 
+        try {
+            return $this->withTheme($fetched, $driver, $context, $output, $cwd, $theme);
+        } finally {
+            // Whatever happened, the download does not stay behind.
+            $fetched->discard();
+        }
+    }
+
+    /**
+     * @param  string  $cwd  the resolved project directory
+     * @param  string  $theme  what the user asked for, before the theme named itself
+     */
+    private function withTheme(
+        FetchedTheme $fetched,
+        Driver $driver,
+        Context $context,
+        OutputInterface $output,
+        string $cwd,
+        string $theme,
+    ): int {
         $schema = $fetched->schema;
 
         note(implode("\n", array_filter([

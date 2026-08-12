@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace FullSystem\Install\Support;
 
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use RuntimeException;
 
 final class Filesystem
@@ -21,5 +24,54 @@ final class Filesystem
         }
 
         return $path;
+    }
+
+    public static function delete(string $path): void
+    {
+        if (is_link($path) || is_file($path)) {
+            unlink($path);
+
+            return;
+        }
+
+        if (! is_dir($path)) {
+            return;
+        }
+
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($items as $item) {
+            $item->isDir() && ! $item->isLink() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+
+        rmdir($path);
+    }
+
+    /**
+     * Clears out what earlier runs left behind.
+     *
+     * A run killed halfway never reaches its own cleanup, so without this the
+     * temp directory collects a copy of every theme ever downloaded. Only
+     * directories with our prefix, and only ones old enough that no run could
+     * still be using them.
+     */
+    public static function forgetOlderThan(string $prefix, int $seconds): void
+    {
+        $cutoff = time() - $seconds;
+
+        foreach (glob(sys_get_temp_dir().'/'.$prefix.'*') ?: [] as $path) {
+            if (! is_dir($path)) {
+                continue;
+            }
+
+            $modified = filemtime($path);
+
+            if ($modified !== false && $modified < $cutoff) {
+                self::delete($path);
+            }
+        }
     }
 }

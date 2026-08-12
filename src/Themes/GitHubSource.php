@@ -17,17 +17,25 @@ final readonly class GitHubSource implements ThemeSource
 {
     public function __construct(private ThemeDownloader $downloader = new ThemeDownloader) {}
 
+    private const string PREFIX = 'fullsystem-theme-';
+
+    /** Long enough that no run still using one could be caught by it. */
+    private const int STALE_AFTER = 3600;
+
     public function fetch(string $theme): FetchedTheme
     {
         $name = Theme::fromString($theme);
 
-        $workspace = Filesystem::temporaryDirectory('fullsystem-theme-');
+        // A run killed halfway never reaches its own cleanup.
+        Filesystem::forgetOlderThan(self::PREFIX, self::STALE_AFTER);
+
+        $workspace = Filesystem::temporaryDirectory(self::PREFIX);
         $archive = $workspace.'/theme.zip';
 
         $this->downloader->download($name, $archive);
 
         $root = Archive::extract($archive, $workspace.'/unpacked');
 
-        return new FetchedTheme(Schema::fromFile($root.'/'.Schema::FILE), $root);
+        return new FetchedTheme(Schema::fromFile($root.'/'.Schema::FILE), $root, $workspace);
     }
 }
