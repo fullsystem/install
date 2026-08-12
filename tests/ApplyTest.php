@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use FullSystem\Install\Context;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\Git;
 use FullSystem\Install\Workspace;
@@ -74,7 +75,7 @@ describe('when the answer is no', function () {
     it('keeps the branch and says how to apply it later', function () {
         $project = laravelProject();
         $workspace = new Workspace;
-        $context = new FullSystem\Install\Context(cwd: $project, theme: 'acme/theme');
+        $context = new Context(cwd: $project, theme: 'acme/theme');
 
         $workspace->open($context);
         touchFile($project, 'resources/js/app.tsx', 'the theme app');
@@ -90,7 +91,7 @@ describe('when the answer is no', function () {
     it('still has the work on the branch', function () {
         $project = laravelProject();
         $workspace = new Workspace;
-        $context = new FullSystem\Install\Context(cwd: $project, theme: 'acme/theme');
+        $context = new Context(cwd: $project, theme: 'acme/theme');
 
         $workspace->open($context);
         touchFile($project, 'resources/js/app.tsx', 'the theme app');

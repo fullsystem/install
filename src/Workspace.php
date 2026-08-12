@@ -26,7 +26,14 @@ final class Workspace
 
     public const string WORK_BRANCH = 'fullsystem/install';
 
-    private const string FIRST_COMMIT = 'Initial commit (made by fullsystem/install)';
+    /**
+     * Conventional Commits, because it is the format most likely to fit a
+     * project's own history — and when it does not, an obviously prefixed
+     * commit is still easy to spot and rewrite.
+     */
+    private const string FIRST_COMMIT = 'chore: start %s';
+
+    public const string INSTALL_COMMIT = 'feat: install %s';
 
     /** Where the user was, to be put back exactly there. */
     private ?string $origin = null;
@@ -190,8 +197,10 @@ final class Workspace
             );
         }
 
-        return $this->git->commitAll($context->cwd, self::FIRST_COMMIT)
-            ? Result::ok()
+        $message = sprintf(self::FIRST_COMMIT, basename($context->cwd));
+
+        return $this->git->commitAll($context->cwd, $message)
+            ? Result::ok($message)
             : Result::fail('could not create the first commit.');
     }
 

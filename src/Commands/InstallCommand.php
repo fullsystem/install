@@ -185,7 +185,10 @@ final class InstallCommand
     private function finish(Workspace $workspace, Context $context, OutputInterface $output, Schema $schema): int
     {
         $theme = $schema->name ?? $context->theme;
-        $message = "Install {$theme}".($schema->version !== null ? " {$schema->version}" : '');
+        $message = sprintf(
+            Workspace::INSTALL_COMMIT,
+            $theme.($schema->version !== null ? " {$schema->version}" : ''),
+        );
 
         if (! $workspace->keep($context, $message)) {
             error('the install worked, but the result could not be committed.');

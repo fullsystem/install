@@ -70,9 +70,15 @@ class Git
         return $this->capture(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], $cwd);
     }
 
-    public function init(string $cwd): bool
+    /**
+     * The branch is named rather than left to init.defaultBranch, which is
+     * still master on plenty of machines — the project should not start
+     * somewhere different depending on who ran the installer.
+     */
+    public function init(string $cwd, string $branch = 'main'): bool
     {
-        return $this->succeeds(['git', 'init', '-q'], $cwd);
+        return $this->succeeds(['git', 'init', '-q', '-b', $branch], $cwd)
+            || $this->succeeds(['git', 'init', '-q'], $cwd);
     }
 
     /**
