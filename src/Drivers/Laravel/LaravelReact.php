@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace FullSystem\Install\Drivers;
+namespace FullSystem\Install\Drivers\Laravel;
 
 use FullSystem\Install\Actions\ActionRegistry;
 use FullSystem\Install\Checks\FreshProject;
 use FullSystem\Install\Context;
+use FullSystem\Install\Drivers\Driver;
 
 /**
  * Laravel with Inertia and React — the only driver that exists so far.

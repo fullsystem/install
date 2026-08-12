@@ -39,12 +39,15 @@ final class FreshProject implements Check
 
     public function run(Context $context): Result
     {
-        if (is_file($context->path(self::STARTER_KIT_PAGE))) {
+        if ($this->fileExists($context)) {
             return Result::ok();
         }
 
-        return Result::fail(
-            'this does not look like a fresh install ('.self::STARTER_KIT_PAGE.' is already gone)'
-        );
+        return Result::fail('this does not look like a fresh install ('.self::STARTER_KIT_PAGE.' is already gone)');
+    }
+
+    public function fileExists(Context $context): bool
+    {
+        return is_file($context->path(self::STARTER_KIT_PAGE));
     }
 }

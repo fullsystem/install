@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use FullSystem\Install\Drivers\LaravelReact;
+use FullSystem\Install\Drivers\Laravel\LaravelReact;
 use Symfony\Component\Console\Command\Command;
 
 it('reports the driver it detected', function () {

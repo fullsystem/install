@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use FullSystem\Install\Actions\Plan;
-use FullSystem\Install\Drivers\LaravelReact;
+use FullSystem\Install\Drivers\Laravel\LaravelReact;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
 

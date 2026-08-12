@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FullSystem\Install\Drivers;
 
 use FullSystem\Install\Context;
+use FullSystem\Install\Drivers\Laravel\LaravelReact;
 
 /**
  * Holds the known drivers and answers which one to use.
