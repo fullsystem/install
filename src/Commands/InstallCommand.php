@@ -16,6 +16,7 @@ use FullSystem\Install\Result;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\ProcessRunner;
+use FullSystem\Install\Support\QuietProcess;
 use FullSystem\Install\Support\SystemProcess;
 use FullSystem\Install\Themes\DownloadFailed;
 use FullSystem\Install\Themes\FetchedTheme;
@@ -91,18 +92,8 @@ final class InstallCommand
 
         $context = new Context(cwd: $cwd, theme: $theme, dryRun: $dryRun, force: $force);
 
-        $registry = DriverRegistry::default();
-        $driver = $registry->detect($context);
-
-        if ($driver === null) {
-            error("Nothing here looks like a project I know how to install into: {$cwd}");
-            note('Known drivers: '.implode(', ', $registry->names()));
-
-            return Command::FAILURE;
-        }
-
-        note("Project: {$cwd}\nTheme:   {$theme}\nDriver:  {$driver->name()}");
-
+        // The theme comes first: it touches nothing here, and what it declares
+        // is what tells us which project to create when there is none.
         try {
             $fetched = $this->fetch($theme);
             $schema = $fetched->schema;
@@ -113,9 +104,19 @@ final class InstallCommand
         }
 
         note(implode("\n", array_filter([
+            "Project: {$cwd}",
             'Theme:   '.($schema->name ?? $theme),
             $schema->version !== null ? "Version: {$schema->version}" : null,
         ])));
+
+        $registry = DriverRegistry::default();
+        $driver = $registry->detect($context) ?? $this->startProject($registry, $schema, $context, $output);
+
+        if ($driver === null) {
+            return Command::FAILURE;
+        }
+
+        $output->writeln("  <info>✓</info> driver <options=bold>{$driver->name()}</>");
 
         try {
             $plan = Plan::from($schema, $driver->actions());
@@ -224,6 +225,100 @@ final class InstallCommand
         outro("Applied to {$origin}.");
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Nothing here recognises the project, which is either a directory with
+     * the wrong thing in it or an empty one waiting for a project.
+     *
+     * An empty one gets the project the theme was written for — the theme
+     * declares its driver, and the driver knows how to start it.
+     */
+    private function startProject(
+        DriverRegistry $registry,
+        Schema $schema,
+        Context $context,
+        OutputInterface $output,
+    ): ?Driver {
+        if (! $this->isEmpty($context->cwd)) {
+            error("Nothing here looks like a project I know how to install into: {$context->cwd}");
+            note('Known drivers: '.implode(', ', $registry->names()));
+
+            return null;
+        }
+
+        if ($schema->driver === null) {
+            error("{$context->cwd} is empty, and the theme does not say which driver it was written for.");
+
+            return null;
+        }
+
+        $driver = $registry->get($schema->driver);
+
+        if ($driver === null) {
+            error("The theme was written for a driver I do not have: {$schema->driver}.");
+            note('Known drivers: '.implode(', ', $registry->names()));
+
+            return null;
+        }
+
+        $step = $driver->newProject();
+
+        if ($step === null) {
+            error("{$driver->name()} cannot start a project from nothing.");
+
+            return null;
+        }
+
+        if ($context->dryRun) {
+            $output->writeln(['', "  <comment>would run: {$step['label']}</comment>"]);
+
+            error("{$context->cwd} is empty, so there is nothing to install into yet.");
+
+            return null;
+        }
+
+        note("{$context->cwd} is empty.\nA new project has to be created before {$schema->name} can go in.");
+
+        if (! confirm("Run `{$step['label']}` here?", default: true)) {
+            error('Nothing to install into.');
+
+            return null;
+        }
+
+        $created = spin(
+            fn (): int => (new QuietProcess($this->processes))->run($step['command'], $context->cwd),
+            $step['label'],
+        );
+
+        if ($created !== 0) {
+            error("{$step['label']} failed.");
+
+            return null;
+        }
+
+        $output->writeln("  <info>✓</info> created a new {$driver->name()} project");
+
+        // The tree only exists now, so detection is asked again rather than
+        // assumed: what was installed has to be what the theme expects.
+        $detected = $registry->detect($context);
+
+        if ($detected === null) {
+            error('The new project is not what '.$driver->name().' recognises.');
+        }
+
+        return $detected;
+    }
+
+    /**
+     * Empty enough for a project to be created here. .DS_Store does not count;
+     * anything else does.
+     */
+    private function isEmpty(string $path): bool
+    {
+        $entries = array_diff(scandir($path) ?: [], ['.', '..', '.DS_Store']);
+
+        return $entries === [];
     }
 
     /**

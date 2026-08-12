@@ -51,15 +51,14 @@ it('creates nothing during a dry run', function () {
 });
 
 /**
- * A directory that was just created is empty, so no driver recognises it. The
- * message has to say that, rather than leaving someone staring at a folder
- * wondering what went wrong.
+ * A directory that was just created is empty, so there is a project to start
+ * before anything can be installed — which needs the theme to say which one.
  */
-it('says a fresh directory has nothing to install into', function () {
+it('offers to start a project in a fresh directory', function () {
     $parent = tempDirectory();
 
     $tester = cli(['path' => $parent.'/app']);
 
     expect($tester->getStatusCode())->toBe(Command::FAILURE)
-        ->and($tester->getDisplay())->toContain('Nothing here looks like a project');
+        ->and($tester->getDisplay())->toContain('does not say which driver');
 });

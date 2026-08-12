@@ -53,12 +53,15 @@ it('stops on anything that goes wrong while fetching', function (RuntimeExceptio
     'no schema' => fn () => new InvalidSchema('The theme has no schema.json.'),
 ]);
 
-it('does not fetch when the project has no driver', function () {
+/**
+ * The theme is fetched before the project is inspected: it touches nothing,
+ * and what it declares is what says which project to create when there is
+ * none.
+ */
+it('fetches before it looks at the project', function () {
     $source = FakeThemeSource::returning();
-    $empty = tempDirectory();
 
-    $tester = cli(['path' => $empty], $source);
+    cli(['path' => tempDirectory()], $source);
 
-    expect($tester->getStatusCode())->toBe(Command::FAILURE)
-        ->and($source->asked)->toBeEmpty();
+    expect($source->asked)->not->toBeEmpty();
 });

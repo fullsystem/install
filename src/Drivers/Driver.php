@@ -75,4 +75,14 @@ interface Driver
      * @return list<array{label: string, command: list<string>}>
      */
     public function verification(Context $context): array;
+
+    /**
+     * How to create the project this driver installs into, for a directory
+     * that has none yet.
+     *
+     * Null for a driver that cannot start one from nothing.
+     *
+     * @return array{label: string, command: list<string>}|null
+     */
+    public function newProject(): ?array;
 }

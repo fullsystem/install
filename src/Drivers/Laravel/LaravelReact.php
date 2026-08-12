@@ -112,6 +112,20 @@ final class LaravelReact implements Driver
         return $steps;
     }
 
+    /**
+     * `composer create-project` rather than `laravel new`: composer is already
+     * a requirement, while the installer binary is something the user may not
+     * have. The starter kit is a `type: project` package, so it installs the
+     * same tree the installer would produce for --react.
+     */
+    public function newProject(): array
+    {
+        return [
+            'label' => 'composer create-project laravel/react-starter-kit',
+            'command' => ['composer', 'create-project', 'laravel/react-starter-kit', '.', '--no-interaction'],
+        ];
+    }
+
     private function hasComposerScript(Context $context, string $script): bool
     {
         return $this->declares($context->path('composer.json'), 'scripts', $script);

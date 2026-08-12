@@ -9,16 +9,21 @@ it('reports the driver it detected', function () {
     expect(cli(['path' => laravelProject()])->getDisplay())->toContain(LaravelReact::NAME);
 });
 
-it('stops when no driver recognises the project', function () {
-    $empty = sys_get_temp_dir().'/fullsystem-empty-'.bin2hex(random_bytes(6));
-    mkdir($empty);
+it('stops when a directory has the wrong thing in it', function () {
+    $wrong = tempDirectory();
+    touchFile($wrong, 'index.html', '<h1>not laravel</h1>');
 
-    $tester = cli(['path' => $empty]);
+    $tester = cli(['path' => $wrong]);
 
     expect($tester->getStatusCode())->toBe(Command::FAILURE)
         ->and($tester->getDisplay())->toContain(LaravelReact::NAME); // lists what it does know
+});
 
-    rmdir($empty);
+it('cannot start a project when the theme does not name a driver', function () {
+    $tester = cli(['path' => tempDirectory()]);
+
+    expect($tester->getStatusCode())->toBe(Command::FAILURE)
+        ->and($tester->getDisplay())->toContain('does not say which driver');
 });
 
 it('does not mistake a laravel project without the react adapter', function () {
