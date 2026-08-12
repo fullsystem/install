@@ -60,4 +60,15 @@ interface Driver
      * @return list<string>
      */
     public function actions(): array;
+
+    /**
+     * What proves the result works, run after everything else.
+     *
+     * The driver's own: a theme brings the tests, the driver decides they get
+     * run. Vue or Livewire would verify differently, and neither should have
+     * to be told how by whoever wrote the theme.
+     *
+     * @return list<array{label: string, command: list<string>}>
+     */
+    public function verification(): array;
 }

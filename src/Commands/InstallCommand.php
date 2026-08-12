@@ -10,12 +10,16 @@ use FullSystem\Install\Checks\Check;
 use FullSystem\Install\Context;
 use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
+use FullSystem\Install\Install\CopySource;
+use FullSystem\Install\Install\Verify;
 use FullSystem\Install\RestorePoint;
+use FullSystem\Install\Result;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\ProcessRunner;
 use FullSystem\Install\Support\SystemProcess;
 use FullSystem\Install\Themes\DownloadFailed;
+use FullSystem\Install\Themes\FetchedTheme;
 use FullSystem\Install\Themes\GitHubSource;
 use FullSystem\Install\Themes\InvalidArchive;
 use FullSystem\Install\Themes\InvalidTheme;
@@ -102,7 +106,8 @@ final class InstallCommand
         note("Project: {$cwd}\nTheme:   {$theme}\nDriver:  {$driver->name()}");
 
         try {
-            $schema = $this->fetch($theme);
+            $fetched = $this->fetch($theme);
+            $schema = $fetched->schema;
         } catch (InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
             error($exception->getMessage());
 
@@ -128,9 +133,9 @@ final class InstallCommand
         }
 
         if ($plan->isEmpty()) {
-            outro('The theme declares no actions.');
-
-            return Command::SUCCESS;
+            // Not the same as nothing to do: the theme's files still land on
+            // the project, which is the one thing every theme does.
+            $output->writeln(['', '  <comment>the theme declares no actions</comment>']);
         }
 
         $point = new RestorePoint;
@@ -147,7 +152,7 @@ final class InstallCommand
             $output->writeln('  <info>✓</info> restore point at <options=bold>'.RestorePoint::NAME.'</>');
         }
 
-        $result = (new Executor($output, $this->processes))->run($plan, $context);
+        $result = $this->install($plan, $context, $output, $driver, $fetched);
 
         if (! $result->ok) {
             error((string) $result->reason);
@@ -173,6 +178,83 @@ final class InstallCommand
     }
 
     /**
+     * The whole thing, in the only order it works.
+     *
+     * pre-install clears the way and installs what the theme depends on;
+     * install lands the files; post-install runs what needs them there —
+     * wayfinder reads the routes it just received. Verification is last,
+     * because it needs everything the phases before it produced.
+     */
+    private function install(
+        Plan $plan,
+        Context $context,
+        OutputInterface $output,
+        Driver $driver,
+        FetchedTheme $fetched,
+    ): Result {
+        $executor = new Executor($output, $this->processes);
+
+        $result = $executor->phase($plan, $context, 'pre-install');
+
+        if (! $result->ok) {
+            return $result;
+        }
+
+        $output->writeln(['', '  <info>install</info>']);
+        $output->writeln("    <options=bold>copy</> {$fetched->schema->source}/");
+
+        $copied = (new CopySource)->run($context, $fetched->schema, $fetched->directory);
+
+        if (! $copied->ok) {
+            return Result::fail("install · copy: {$copied->reason}");
+        }
+
+        $output->writeln("      <fg=gray>{$copied->message}</>");
+
+        $result = $executor->phase($plan, $context, 'post-install');
+
+        if (! $result->ok) {
+            return $result;
+        }
+
+        return $this->verify($context, $output, $driver);
+    }
+
+    /**
+     * Quiet unless it fails, which is when its output is the only thing that
+     * matters.
+     */
+    private function verify(Context $context, OutputInterface $output, Driver $driver): Result
+    {
+        $steps = $driver->verification();
+
+        if ($steps === []) {
+            return Result::ok();
+        }
+
+        $labels = implode(', ', array_column($steps, 'label'));
+
+        $output->writeln(['', '  <info>verify</info>']);
+
+        if ($context->dryRun) {
+            $output->writeln("    <fg=gray>would run: {$labels}</>");
+
+            return Result::ok();
+        }
+
+        $result = spin(
+            fn (): Result => (new Verify($this->processes))->run($context, $steps),
+            $labels,
+        );
+
+        if ($result->ok) {
+            $output->writeln("    <fg=gray>{$result->message}</>");
+        }
+
+        return $result;
+    }
+
+    /**
      * A failed run leaves the project mid-transformation, which is worse than
      * either end of it. Nothing is ever pushed, so this only ever undoes what
      * happened locally.
@@ -190,9 +272,9 @@ final class InstallCommand
         $output->writeln('  <comment>could not roll back. Undo it by hand: '.$point->undoCommand().'</comment>');
     }
 
-    private function fetch(string $theme): Schema
+    private function fetch(string $theme): FetchedTheme
     {
-        return spin(fn (): Schema => $this->themes->fetch($theme), "Fetching {$theme}");
+        return spin(fn (): FetchedTheme => $this->themes->fetch($theme), "Fetching {$theme}");
     }
 
     /**

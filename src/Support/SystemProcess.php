@@ -37,4 +37,19 @@ final class SystemProcess implements ProcessRunner
             return 127;
         }
     }
+
+    public function capture(array $command, string $cwd): ProcessResult
+    {
+        try {
+            $process = new Process($command, cwd: $cwd, timeout: self::TIMEOUT);
+            $process->run();
+
+            return new ProcessResult(
+                $process->getExitCode() ?? 1,
+                $process->getOutput().$process->getErrorOutput(),
+            );
+        } catch (ExceptionInterface) {
+            return new ProcessResult(127, '');
+        }
+    }
 }

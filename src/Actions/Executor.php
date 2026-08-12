@@ -25,23 +25,21 @@ final readonly class Executor
         private ProcessRunner $processes = new SystemProcess,
     ) {}
 
-    public function run(Plan $plan, Context $context): Result
+    public function phase(Plan $plan, Context $context, string $phase): Result
     {
-        foreach (Plan::PHASES as $phase) {
-            $actions = $plan->actions($phase);
+        $actions = $plan->actions($phase);
 
-            if ($actions === []) {
-                continue;
-            }
+        if ($actions === []) {
+            return Result::ok();
+        }
 
-            $this->output->writeln(['', "  <info>{$phase}</info>"]);
+        $this->output->writeln(['', "  <info>{$phase}</info>"]);
 
-            foreach ($actions as $action) {
-                $result = $this->execute($action, $context);
+        foreach ($actions as $action) {
+            $result = $this->execute($action, $context);
 
-                if (! $result->ok) {
-                    return Result::fail("{$phase} · {$action->name}: {$result->reason}");
-                }
+            if (! $result->ok) {
+                return Result::fail("{$phase} · {$action->name}: {$result->reason}");
             }
         }
 

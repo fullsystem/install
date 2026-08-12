@@ -17,7 +17,7 @@ final readonly class GitHubSource implements ThemeSource
 {
     public function __construct(private ThemeDownloader $downloader = new ThemeDownloader) {}
 
-    public function fetch(string $theme): Schema
+    public function fetch(string $theme): FetchedTheme
     {
         $name = Theme::fromString($theme);
 
@@ -28,6 +28,6 @@ final readonly class GitHubSource implements ThemeSource
 
         $root = Archive::extract($archive, $workspace.'/unpacked');
 
-        return Schema::fromFile($root.'/'.Schema::FILE);
+        return new FetchedTheme(Schema::fromFile($root.'/'.Schema::FILE), $root);
     }
 }

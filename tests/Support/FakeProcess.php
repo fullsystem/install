@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use FullSystem\Install\Support\ProcessResult;
 use FullSystem\Install\Support\ProcessRunner;
 
 /**
@@ -20,9 +21,18 @@ final class FakeProcess implements ProcessRunner
     /** @var array<string, int> */
     private array $failures = [];
 
+    private string $output = '';
+
     public function fails(string $needle, int $exitCode = 1): self
     {
         $this->failures[$needle] = $exitCode;
+
+        return $this;
+    }
+
+    public function outputs(string $output): self
+    {
+        $this->output = $output;
 
         return $this;
     }
@@ -38,6 +48,11 @@ final class FakeProcess implements ProcessRunner
         }
 
         return 0;
+    }
+
+    public function capture(array $command, string $cwd): ProcessResult
+    {
+        return new ProcessResult($this->run($command, $cwd), $this->output);
     }
 
     /**

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace FullSystem\Install\Themes;
 
 use FullSystem\Install\Schema\InvalidSchema;
-use FullSystem\Install\Schema\Schema;
 
 /**
  * Where a theme comes from.
@@ -19,5 +18,5 @@ interface ThemeSource
     /**
      * @throws InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema
      */
-    public function fetch(string $theme): Schema;
+    public function fetch(string $theme): FetchedTheme;
 }

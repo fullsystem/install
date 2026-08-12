@@ -78,4 +78,18 @@ final class LaravelReact implements Driver
     {
         return ActionRegistry::names();
     }
+
+    /**
+     * The build catches what the theme's TypeScript cannot resolve — the usual
+     * failure when a frontend is replaced wholesale. The suite catches what it
+     * broke behind: the theme ships its own tests, and this is where they earn
+     * their place.
+     */
+    public function verification(): array
+    {
+        return [
+            ['label' => 'npm run build', 'command' => ['npm', 'run', 'build']],
+            ['label' => 'composer test', 'command' => ['composer', 'test']],
+        ];
+    }
 }
