@@ -18,7 +18,7 @@ final readonly class Schema
     public const string FILE = 'schema.json';
 
     /** Where the theme keeps the files that mirror the project root. */
-    public const string DEFAULT_SOURCE = 'stubs';
+    public const string DEFAULT_SOURCE = 'source';
 
     /**
      * @param  array<mixed>  $phases

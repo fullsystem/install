@@ -1,308 +1,229 @@
-> **Status: entry point only.** The command runs, parses its options and
-> prints what it would target. None of the steps below are implemented yet —
-> this README describes the shape being built, and the pipeline it documents
-> is the one from the npx package it replaces.
->
-> There is no tagged release yet, so cpx cannot resolve a stable version.
-> Until the first tag, ask for the branch explicitly:
-> `cpx fullsystem/install:dev-main`.
-
-> This deletes files. It is built for a project fresh out of `laravel new`,
-> where the starter kit frontend is still untouched. On a project with real
-> work in it, run `--dry-run` first and read the list.
-
 # fullsystem/install
 
-Replace the Laravel starter kit frontend with your own.
+Install a theme into a Laravel project.
 
-The React starter kit ships a full frontend — components, layouts and pages —
-built on Base UI. If you have your own design system, most of that has to go
-before yours can go in. The shadcn CLI adds components; nothing removes what
-the kit left behind. This does.
+A theme is a repository: some files that mirror your project root, and a
+`schema.json` saying what has to happen for them to work — packages to install,
+files to remove, commands to run. This runs it.
 
 ```bash
 cpx fullsystem/install
 ```
 
-That installs the `fullsystem/starter` theme. To install a different one:
+That installs `fullsystem/starter` into the current directory. To install a
+different theme, or somewhere else:
 
 ```bash
-cpx fullsystem/install --theme=laravel/starter-kit
+cpx fullsystem/install ~/code/my-app --theme=acme/dashboard
 ```
 
-Runs in the root of a Laravel project. Everything it does is declared by the
-theme, so the same command can install any frontend.
+> It deletes files, rewrites migrations and runs commands. Everything happens
+> on a branch, and a failure anywhere puts the project back — but read
+> `--dry-run` first on a project you care about.
 
-## What it does
-
-| step | |
-|---|---|
-| `fetch` | downloads the theme archive and reads its `schema.json` |
-| `composer` | installs the PHP packages the theme declares |
-| `npm` | installs the JS packages the theme declares |
-| `strip` | removes the starter kit files |
-| `shadcn` | runs `shadcn init` and `add` with the declared preset |
-| `copy` | copies the theme's files over the project |
-| `artisan` | runs the artisan commands the theme declares |
-| `verify` | runs the build, rolling back if it fails |
-
-Dependencies install before `strip` because `composer` boots the application
-to discover packages, which fails once routes are gone. `copy` runs after
-`shadcn` so generated `ui/` components cannot overwrite files shipped by the
-theme. `artisan` runs after `copy` because the files it acts on are usually
-the ones just copied in.
-
-The whole `schema.json` is validated during `fetch`, before anything is
-written. An unlisted artisan command or a path escaping the project root
-fails while the project is still untouched.
-
-If the build fails, the project is restored to the commit it was on before
-the first step. Nothing is left half-installed.
-
-### How a theme is fetched
-
-A theme is downloaded as an archive, not cloned:
+## How a run goes
 
 ```
-https://github.com/<theme>/archive/refs/heads/main.zip
+detect the project      →  laravel-react, or an empty directory to start one in
+fetch the theme         →  download, unpack, read the schema
+checks                  →  what the driver needs, and what the theme requires
+branch                  →  feat/fullsystem-install, off where you are
+pre-install             →  what the theme declares: packages, removals, shadcn
+install                 →  the theme's files land on the project
+post-install            →  what the theme declares: artisan, and so on
+verify                  →  lint, build, test
+commit, then ask        →  apply it to your branch, or keep it on this one
 ```
 
-Download rather than `git clone` because an HTTP request has somewhere to put
-an `Authorization` header and a clone does not — authenticating a clone means
-embedding the credential in the URL, where it lands in the shell history and
-in the clone's own `.git/config`. Exclusive themes are the reason; for public
-themes the difference is invisible.
+Any failure rolls the project back to where it started. Nothing is ever pushed.
 
-Two consequences worth knowing:
+### It can start the project too
 
-**Archives are unpacked defensively.** A zip entry can name a path like
-`../../etc`, which would write outside the extraction directory. Every entry
-is checked before extraction, and an archive with a single bad entry is
-rejected whole rather than unpacked halfway.
+Point it at an empty directory and it offers to create one first:
 
-**The default branch is a moving target.** Today the fetch takes whatever
-`main` currently holds, so two people running the same command in the same
-week can get different trees. Pinning a theme to a tag is not supported yet.
+```
+./app is empty.
+A new project has to be created before fullsystem/starter can go in.
 
-`git` is still required — the rollback uses it — but it is the *project's*
-git, not the theme's. Nothing about the theme touches git anymore.
+Run `composer create-project laravel/react-starter-kit` here? [yes]
+```
+
+Which project is not a guess — the theme declares the driver it was written
+for, and the driver knows the command. A directory with something else in it
+is left alone.
+
+### The branch
+
+The work happens on `feat/fullsystem-install`, branched from wherever you
+were, and is committed there. When it finishes you are standing on that
+branch with the theme installed, so you can run the app and look before
+deciding:
+
+```
+Apply it to main? [yes]
+```
+
+Saying no keeps the branch and puts you back — `git merge feat/fullsystem-install`
+whenever you want. `fullsystem/pre-install` marks the commit you started on,
+so `git reset --hard fullsystem/pre-install` undoes everything either way.
+
+A project with no git gets one, with a first commit, because without a commit
+there is nothing to go back to.
 
 ## Requirements
 
-- A Laravel project with a clean git working tree
-- PHP 8.3+ with `ext-zip`
-- `git`, `composer`, `node` and `npm` on PATH
+- PHP 8.3+ with `ext-zip` and `ext-curl`
+- `git`, `composer` and Node on PATH
 - [cpx](https://github.com/laravel/cpx) — `composer global require cpx/cpx`
 
-The clean tree is not optional: it is what makes the rollback possible.
-
-Node is still required. This is a PHP command, but the frontend it installs
-is built with the shadcn CLI and verified with `npm run build`.
+Node is still required. This is a PHP command, but the frontend it installs is
+built with Node tooling and verified with a real build.
 
 If you would rather not go through cpx, `composer global require
 fullsystem/install` puts the same command on your PATH as `fullsystem`.
-
-## Checks
-
-Four checks run before anything is written.
-
-**laravel-project** — `artisan` and `composer.json` must be present.
-
-**components-directory** — `resources/js/components` must exist. Without the
-starter kit frontend there is nothing to replace.
-
-**clean-worktree** — refuses to run with uncommitted changes. Without a
-known-good commit there is nothing to roll back to.
-
-**fresh-project** — looks for signs that the project is not a fresh install:
-more than one commit, or starter kit pages that are already gone. It is a
-heuristic, not a guarantee. A false positive costs one keystroke; a false
-negative costs someone's frontend.
-
-The first two describe what the command needs to work at all, and stop the
-run. The last two describe risk, so they ask instead: answer no and nothing
-happens. With `--no-interaction` — CI, or an agent — there is nobody to ask,
-so they stop the run unless `--force` said yes up front.
 
 ## Options
 
 | | |
 |---|---|
+| `<path>` | Directory to install into. Defaults to the current one. Created if its parent exists. |
 | `--theme=<owner/repo>`, `-t` | Theme to install. Defaults to `fullsystem/starter`. |
-| `--dry-run` | Prints the plan without writing anything. |
-| `--force`, `-f` | Answers yes to the risk checks up front. |
+| `--dry-run` | Prints everything that would happen, writes nothing. |
+| `--force` | Answers yes to the risk checks up front. |
+| `-v` | Lets composer, npm and shadcn write to the terminal. Off by default: their output is kept and printed only if something fails. |
 | `--no-interaction`, `-n` | Never asks. Every question resolves to its default. |
-
-Everything is an option; nothing is positional. A positional argument would
-be read as a command name.
-
-Run `--dry-run` before installing an unfamiliar theme — it lists every file
-that will be deleted.
 
 ## Writing a theme
 
-A `schema.json` in the root and a directory of files:
+A `schema.json` in the root, and a directory of files that mirrors the project
+root:
 
 ```
-your-theme/
+acme/dashboard
 ├── schema.json
-└── files/
-    ├── routes/web.php
-    └── resources/js/
-        ├── app.tsx
-        ├── layouts/
-        └── pages/
+└── source/
+    ├── app/Models/User.php
+    ├── resources/js/app.tsx
+    └── routes/web.php
 ```
 
-`files/` mirrors the project root, so `files/resources/js/app.tsx` lands at
-`resources/js/app.tsx`. No path mapping. Anything outside `files/` — README,
-licence, CI config — stays in the theme's repository.
+`source/resources/js/app.tsx` lands at `resources/js/app.tsx`. No path mapping.
+Anything outside `source/` — README, licence, CI config — stays in the theme.
 
 ```json
 {
-  "name": "your/theme",
-  "shadcn": {
-    "preset": "vega",
-    "template": "laravel",
-    "components": "all",
-    "pointer": true
-  },
-  "composer": {
-    "require": ["laravel/reverb"],
-    "require-dev": []
-  },
-  "npm": {
-    "dependencies": ["@laravel/echo-react", "pusher-js"],
-    "devDependencies": []
-  },
-  "artisan": ["wayfinder:generate"],
-  "remove": [
-    "resources/js/components",
-    "resources/js/layouts",
-    "resources/js/pages",
-    "routes/web.php"
-  ],
-  "source": "files"
+  "name": "acme/dashboard",
+  "version": "1.0.0",
+  "driver": "laravel-react",
+  "source": "source",
+  "requires": ["fresh-project"],
+  "phases": {
+    "pre-install": [
+      { "composer": ["laravel/reverb", "intervention/image"] },
+      { "composer": ["pestphp/pest"], "dev": true },
+      { "packages": ["@laravel/echo-react", "date-fns"] },
+      { "remove": ["resources/js/pages", "routes/web.php"] },
+      { "shadcn": { "preset": "vega", "components": "all", "pointer": true } }
+    ],
+    "post-install": [
+      { "artisan": ["wayfinder:generate --with-form"] }
+    ]
+  }
 }
 ```
 
-Every field is optional. A theme that only replaces pages can declare nothing
-but `source`, and even that defaults to `files`.
+`tests/fixtures/schema.json` in this repository is the same thing, kept honest
+by tests: it has to parse, use only actions the driver knows, and exercise
+every one of them.
 
-### shadcn
+### Phases
 
-| field | |
+A phase is a **list**, so the same action can appear more than once and the
+order is the order you wrote:
+
+```json
+"pre-install": [
+  { "remove": ["routes/web.php"] },
+  { "composer": ["acme/router"] },
+  { "remove": ["config/router.php"] }
+]
+```
+
+Each item names exactly one action; any other key is a modifier of it, which
+is what makes `{ "composer": [...], "dev": true }` read the way it does.
+
+You declare `pre-install` and `post-install`. The two phases in between —
+copying `source/` over the project, and verifying the result — belong to the
+driver: a theme that could reorder them could put the copy before the
+deletions that clear the way for it.
+
+### Actions
+
+| action | parameters | what it does |
+|---|---|---|
+| `composer` | list of packages | `composer require`, with `"dev": true` for require-dev |
+| `packages` | list of packages | installs JS dependencies with whichever manager the project's lockfile says — npm, pnpm, yarn or bun |
+| `remove` | list of paths | deletes them, relative to the project root |
+| `shadcn` | `preset`, `base`, `template`, `components`, `pointer` | `shadcn init` then `add` |
+| `artisan` | list of commands | `php artisan …` |
+
+An action the driver does not know is refused before anything runs, and the
+error says what it does know.
+
+### requires
+
+Some conditions belong to the theme rather than the environment. A theme that
+rewrites the users migration needs a project nobody has built on; one that
+only adds a module would never pass that check and should not be asked to.
+
+| check | fails when |
 |---|---|
-| `preset` | A registered name (`vega`, `nova`) or a code generated at [ui.shadcn.com/create](https://ui.shadcn.com/create). |
-| `base` | `base`, `radix` or `aria`. Omit it — the preset carries this. |
-| `template` | Passed as `-t`. Optional; shadcn detects the framework on its own. |
-| `components` | `"all"` or an array of names. |
-| `pointer` | `true` or `false` for pointer cursors on buttons. |
+| `fresh-project` | more than one commit, the starter kit pages are gone, or there are models besides `User` |
 
-An explicit `components` array is usually better than `"all"`. Every
-component becomes a real `.tsx` file in the consuming project, linted,
-type-checked and reviewed forever. `"all"` is around sixty of them.
+A failing check of this kind is a question, not a verdict: it says what it saw
+and asks whether to continue. `--force` answers yes in advance, which is also
+what happens where there is no terminal to ask in.
 
-The step always passes `-f -y --reinstall`, so it never prompts.
+### What is not allowed
 
-### composer and npm
+The installer runs what a theme declares, so what it will not run is worth
+knowing:
 
-Package names are validated for format before being passed to the installer.
-That prevents argument injection — a "package" named `--ignore-platform-reqs`
-would otherwise be read as a flag — but it does not make an unknown package
-safe. That trust comes from choosing the theme.
+- **Commands are argument lists, never strings.** Nothing reaches a shell, so
+  `migrate; rm -rf /` arrives at artisan as one literal argument and dies
+  there.
+- **Package names are checked for shape.** Not against a shell — there is
+  none — but against a "package" called `--ignore-platform-reqs`, which
+  composer would obey as a flag.
+- **Paths cannot leave the project.** `remove` entries and archive entries
+  alike; an archive with one bad entry is refused whole rather than unpacked
+  halfway.
+- **Some artisan commands are refused outright**: `db:wipe`, `migrate:fresh`,
+  `migrate:reset`, `migrate:rollback`.
 
-Some packages need more than installation. `laravel/reverb`, for example, has
-its own `php artisan reverb:install` that publishes config and writes
-environment variables. The schema installs the dependency; finishing the
-setup is the user's job.
-
-### artisan
-
-Only these commands are allowed:
-
-```
-wayfinder:generate
-storage:link
-migrate
-optimize:clear
-```
-
-They run in the project with the same PHP binary that is running the
-installer. Flags are checked for shape, so `--force` passes and
-`--force=$(whoami)` does not. Anything outside the list fails during `fetch`,
-before a single file has been touched.
-
-### remove
-
-Paths are relative to the project root. Absolute paths and anything escaping
-the root are rejected, and the whole list is validated before a single file
-is deleted. Missing paths are skipped silently.
-
-Whatever you list is removed on top of a small base set the kit always leaves
-behind:
-
-```
-components.json
-pnpm-workspace.yaml
-resources/js/hooks/use-mobile.tsx
-```
-
-Those three are starter kit artifacts, not design decisions.
-`components.json` is rewritten by `shadcn init`. `pnpm-workspace.yaml` ships
-even in npm-installed projects and makes the shadcn CLI shell out to pnpm,
-which then fails because the kit's `.npmrc` sets `ignore-scripts=true`.
-`use-mobile.tsx` collides with the `use-mobile.ts` shadcn generates — two
-files, same module, resolved by extension precedence rather than intent.
-
-`resources/js/components/ui` is deliberately not in the base set. It also
-holds `icon.tsx` and `placeholder-pattern.tsx`, which ship with Laravel and
-are not in the shadcn registry, so `add --all` will not restore them. Declare
-it yourself if you want it gone.
-
-Prefer removing directories over individual files. Some kit files depend on
-options chosen during `laravel new` — teams, passkeys, two-factor — and won't
-exist in every project.
-
-### What survives
-
-`strip` only removes what is declared, so `resources/js/hooks`, `lib`,
-`types`, `app.tsx`, `ssr.tsx` and everything under `app/` stay unless you say
-otherwise.
-
-That last part matters. If you leave the kit's `app.tsx` in place, it
-dictates which layouts must exist — it imports `@/layouts/app-layout`,
-`@/layouts/auth-layout`, `@/layouts/settings/layout` and
-`@/components/ui/sonner`, and the build fails without them. Ship your own
-`app.tsx` (and `ssr.tsx`, which has the same imports) if you want your own
-structure.
+None of this protects you from a theme you should not have trusted — see
+[SECURITY.md](SECURITY.md) for where that line is.
 
 ## Caveats
 
+**A theme deleting what it does not replace.** `remove` and `source/` are not
+checked against each other, so a theme that deletes `resources/js/pages`
+without shipping pages leaves a project that does not build. The verification
+catches it and the rollback undoes it, but only after the whole run.
+
 **Auth pages have an untyped contract with the backend.** Inertia props,
 wayfinder route names and validation error keys are agreed by convention, not
-by types. If you replace `pages/auth` while keeping Fortify's controllers, a
-change on either side compiles fine and fails at runtime. Pin the starter kit
-commit you derived from and diff it when the kit updates.
+by types. Replacing `pages/auth` while keeping Fortify's controllers compiles
+fine and fails at runtime.
 
-**Private themes are not supported yet.** A theme you cannot reach is a 404
-on the archive, and the run stops there. Authenticating for exclusive themes
-is what `login` will be for, and the download is what makes it possible.
+**Private themes are not supported yet.** A theme you cannot reach is a 404 on
+the archive. Authenticating for exclusive themes is what `login` will be for.
 
-**Rollback restores tracked files only.** `node_modules` is not tracked by
-git, so after a failed run it holds packages the restored `package.json` no
-longer declares. Run `npm install` to resynchronise.
+**The default branch is a moving target.** The fetch takes whatever `main`
+holds right now; pinning a theme to a tag is not supported yet.
 
-**Rollback with `--force` is dangerous.** On a dirty working tree, `git reset
---hard` discards uncommitted work along with everything this command wrote.
-The clean-worktree check exists for exactly this reason.
-
-**cpx caches the installer.** A run reuses the version it already has until
-its update check fires. Run `cpx update` to force it, or pin explicitly with
-`cpx fullsystem/install:^1.0`.
-
-**npm only.** The starter kit installs with npm and ships
-`package-lock.json`. Other package managers are not detected or supported.
+**cpx caches the installer.** A run reuses the version it already has until its
+update check fires. `cpx update fullsystem/install` forces it.
 
 ## Contributing
 
@@ -317,20 +238,15 @@ only required to run it against a real project.
 
 ### Running it
 
-The command acts on the directory it is called from, not the one it lives in.
-So point it at a throwaway Laravel project rather than at the package:
+The command acts on the directory it is called from, not the one it lives in,
+so point it at a throwaway project rather than at the package:
 
 ```bash
-cd ~/some/laravel-project && php ~/code/fullsystem/install/bin/fullsystem
+php ~/code/fullsystem/install/bin/fullsystem ~/tmp/app --dry-run
 ```
 
-Testing through `cpx` is not useful during development: cpx installs the
-published package from Packagist into its own directory, so it will not see
-your changes. Call `bin/fullsystem` directly.
-
-Make that throwaway project a real one — `laravel new` with the React starter
-kit, committed once. The checks are written against exactly that shape, and a
-bare directory will not exercise them.
+Testing through `cpx` is not useful while developing: cpx installs the
+published package into its own directory and will not see your changes.
 
 ### Checks
 
@@ -338,37 +254,46 @@ bare directory will not exercise them.
 composer test
 ```
 
-Runs the three below in order and fails on the first one that complains.
+Runs the three below in order, and is exactly what CI runs.
 
 | | |
 |---|---|
 | `composer analyse` | PHPStan, level 6, over `src` |
 | `composer lint` | Pint, applies the fixes |
-| `composer lint:check` | Pint, fails instead of fixing — this is what CI runs |
+| `composer lint:check` | Pint, fails instead of fixing |
 | `composer test:unit` | Pest |
 
 A single test while you work on it:
 
 ```bash
-vendor/bin/pest --filter="init alias"
+vendor/bin/pest --filter="rolls the project back"
 ```
 
 ### Layout
 
 ```
 bin/fullsystem          the executable cpx resolves from composer.json "bin"
-src/Application.php     Symfony Console app; `install` is the default command
-src/Commands/           the command itself
-tests/Pest.php          cli() helper — drives the app the way cpx does
+src/Application.php     routes the first token: a command, or a path
+src/Commands/           the command
+src/Drivers/            what a kind of project is, and how to work with it
+src/Actions/            what a theme can declare, one handler per action
+src/Checks/             what has to be true before anything is written
+src/Install/            copying the theme in, and proving the result works
+src/Themes/             downloading and unpacking a theme
+src/Workspace.php       the branch, and how to get back
+tests/fixtures/         the reference schema
 ```
 
-Tests go through `Application`, not through the command class, so the default
-command resolution and the `init` alias stay covered.
+Adding an action is one file in `src/Actions/`: implement `Handler`, and the
+registry finds it.
+
+Nothing in `src/` runs a process directly — handlers take a `ProcessRunner`,
+which is what keeps the suite from installing packages on whoever runs it.
 
 ### Conventions
 
-Strict types everywhere, `final` by default, and Pint's Laravel preset. Do not
-override `ordered_imports` in `pint.json` — combined with the preset's
+Strict types everywhere, `final` by default, Pint's Laravel preset. Do not
+override `ordered_imports` in `pint.json`: combined with the preset's
 `blank_line_between_import_groups` it never converges, and `composer test`
 fails on a file Pint just formatted.
 

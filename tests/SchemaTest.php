@@ -24,7 +24,7 @@ describe('the reference schema', function () {
         expect($schema->name)->toBe('fullsystem/starter')
             ->and($schema->version)->toBe('0.1.0')
             ->and($schema->driver)->toBe('laravel-react')
-            ->and($schema->source)->toBe('stubs');
+            ->and($schema->source)->toBe('source');
     });
 
     it('declares only actions the driver can execute', function () {
@@ -83,7 +83,7 @@ describe('the reference schema', function () {
 });
 
 describe('parsing', function () {
-    it('defaults source to stubs', function () {
+    it('defaults source to source', function () {
         expect(Schema::fromJson('{"name":"acme/theme"}')->source)->toBe(Schema::DEFAULT_SOURCE);
     });
 
