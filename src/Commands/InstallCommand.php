@@ -277,7 +277,7 @@ final class InstallCommand
      */
     private function verify(Context $context, OutputInterface $output, Driver $driver): Result
     {
-        $steps = $driver->verification();
+        $steps = $driver->verification($context);
 
         if ($steps === []) {
             return Result::ok();

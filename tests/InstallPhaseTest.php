@@ -116,8 +116,50 @@ describe('verification', function () {
 
         $tester = cli(['path' => laravelProject()], themeWith(['routes/web.php' => 'x']), $processes);
 
-        expect($processes->lines())->toBe(['npm run build', 'composer test'])
-            ->and($tester->getDisplay())->toContain('2 check(s) passed');
+        expect($processes->lines())->toBe(['composer lint', 'npm run build', 'composer test'])
+            ->and($tester->getDisplay())->toContain('3 check(s) passed');
+    });
+
+    /**
+     * The starter kit's own `composer test` runs lint:check before the suite,
+     * so a theme whose files arrive in a different style would fail an install
+     * that worked. Fixing before checking is the only order that survives it.
+     */
+    it('lints before it tests', function () {
+        $processes = new FakeProcess;
+
+        cli(['path' => laravelProject()], themeWith(['routes/web.php' => 'x']), $processes);
+
+        $lines = $processes->lines();
+
+        expect(array_search('composer lint', $lines, true))
+            ->toBeLessThan((int) array_search('composer test', $lines, true));
+    });
+
+    it('skips a step the project does not declare', function () {
+        $project = laravelProject();
+        // The plain skeleton: a test script, and no lint.
+        file_put_contents($project.'/composer.json', '{"scripts":{"test":["@php artisan test"]}}');
+
+        $processes = new FakeProcess;
+
+        cli(['path' => $project], themeWith(['routes/web.php' => 'x']), $processes);
+
+        expect($processes->lines())->not->toContain('composer lint')
+            ->and($processes->lines())->toContain('composer test');
+    });
+
+    it('runs nothing when the project declares neither', function () {
+        $project = laravelProject();
+        file_put_contents($project.'/composer.json', '{}');
+        file_put_contents($project.'/package.json', '{"dependencies":{"@inertiajs/react":"^3.6.1"}}');
+
+        $processes = new FakeProcess;
+
+        $tester = cli(['path' => $project], themeWith(['routes/web.php' => 'x']), $processes);
+
+        expect($tester->getStatusCode())->toBe(0)
+            ->and($processes->calls)->toBeEmpty();
     });
 
     it('shows the output only when it fails', function () {
@@ -150,6 +192,6 @@ describe('verification', function () {
         $tester = cli(['path' => laravelProject(), '--dry-run' => true], themeWith(['routes/web.php' => 'x']), $processes);
 
         expect($processes->calls)->toBeEmpty()
-            ->and($tester->getDisplay())->toContain('would run: npm run build, composer test');
+            ->and($tester->getDisplay())->toContain('would run: composer lint, npm run build, composer test');
     });
 });

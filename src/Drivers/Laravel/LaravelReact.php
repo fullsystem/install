@@ -80,16 +80,66 @@ final class LaravelReact implements Driver
     }
 
     /**
-     * The build catches what the theme's TypeScript cannot resolve — the usual
-     * failure when a frontend is replaced wholesale. The suite catches what it
-     * broke behind: the theme ships its own tests, and this is where they earn
-     * their place.
+     * Lint first, because it fixes: the theme's files arrive in the theme's
+     * style, and the starter kit's own `composer test` runs `lint:check`
+     * before the suite — so a formatting difference would fail an install
+     * that worked.
+     *
+     * Then the build, which catches what the theme's TypeScript cannot
+     * resolve — the usual failure when a frontend is replaced wholesale. Then
+     * the suite, which catches what it broke behind: the theme ships its own
+     * tests, and this is where they earn their place.
+     *
+     * Each step is skipped when the project does not declare it. The skeleton
+     * has no `composer lint`; the React starter kit does.
      */
-    public function verification(): array
+    public function verification(Context $context): array
     {
-        return [
-            ['label' => 'npm run build', 'command' => ['npm', 'run', 'build']],
-            ['label' => 'composer test', 'command' => ['composer', 'test']],
-        ];
+        $steps = [];
+
+        if ($this->hasComposerScript($context, 'lint')) {
+            $steps[] = ['label' => 'composer lint', 'command' => ['composer', 'lint']];
+        }
+
+        if ($this->hasNpmScript($context, 'build')) {
+            $steps[] = ['label' => 'npm run build', 'command' => ['npm', 'run', 'build']];
+        }
+
+        if ($this->hasComposerScript($context, 'test')) {
+            $steps[] = ['label' => 'composer test', 'command' => ['composer', 'test']];
+        }
+
+        return $steps;
+    }
+
+    private function hasComposerScript(Context $context, string $script): bool
+    {
+        return $this->declares($context->path('composer.json'), 'scripts', $script);
+    }
+
+    private function hasNpmScript(Context $context, string $script): bool
+    {
+        return $this->declares($context->path('package.json'), 'scripts', $script);
+    }
+
+    private function declares(string $manifest, string $section, string $key): bool
+    {
+        if (! is_file($manifest)) {
+            return false;
+        }
+
+        $contents = file_get_contents($manifest);
+
+        if ($contents === false) {
+            return false;
+        }
+
+        /** @var mixed $data */
+        $data = json_decode($contents, true);
+
+        return is_array($data)
+            && isset($data[$section])
+            && is_array($data[$section])
+            && array_key_exists($key, $data[$section]);
     }
 }

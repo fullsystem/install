@@ -57,8 +57,10 @@ function laravelProject(): string
 
     mkdir($path, 0755, true);
     file_put_contents($path.'/artisan', '');
-    file_put_contents($path.'/composer.json', '{}');
-    file_put_contents($path.'/package.json', '{"dependencies":{"@inertiajs/react":"^3.6.1"}}');
+    // The scripts the React starter kit declares — verification asks the
+    // project which of them exist before running any.
+    file_put_contents($path.'/composer.json', '{"scripts":{"lint":["pint"],"test":["@lint:check","@php artisan test"]}}');
+    file_put_contents($path.'/package.json', '{"dependencies":{"@inertiajs/react":"^3.6.1"},"scripts":{"build":"vite build"}}');
 
     // Real Laravel projects ship one, and without it the installer refuses to
     // make the first commit rather than putting .env into the history.

@@ -68,7 +68,11 @@ interface Driver
      * run. Vue or Livewire would verify differently, and neither should have
      * to be told how by whoever wrote the theme.
      *
+     * Which of them exist depends on the project: the skeleton has no
+     * `composer lint`, the React starter kit does. Asking for one that is not
+     * there would fail an install that was fine.
+     *
      * @return list<array{label: string, command: list<string>}>
      */
-    public function verification(): array;
+    public function verification(Context $context): array;
 }
