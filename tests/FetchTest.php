@@ -54,14 +54,38 @@ it('stops on anything that goes wrong while fetching', function (RuntimeExceptio
 ]);
 
 /**
- * The theme is fetched before the project is inspected: it touches nothing,
- * and what it declares is what says which project to create when there is
- * none.
+ * The project is looked at first, and the theme is only fetched once there is
+ * something to do with it. Pointing this at the wrong directory should not
+ * cost a download.
  */
-it('fetches before it looks at the project', function () {
+it('does not fetch when the directory holds something it cannot install into', function () {
+    $wrong = tempDirectory();
+    touchFile($wrong, 'index.html', 'not laravel');
+
+    $source = FakeThemeSource::returning();
+
+    $tester = cli(['path' => $wrong], $source);
+
+    expect($tester->getStatusCode())->toBe(Command::FAILURE)
+        ->and($source->asked)->toBeEmpty();
+});
+
+/**
+ * An empty directory is the exception: there is nothing to detect, and the
+ * theme is what says which project to create.
+ */
+it('fetches to find out what project an empty directory needs', function () {
     $source = FakeThemeSource::returning();
 
     cli(['path' => tempDirectory()], $source);
 
     expect($source->asked)->not->toBeEmpty();
+});
+
+it('fetches once, not twice', function () {
+    $source = FakeThemeSource::returning();
+
+    cli(['path' => laravelProject()], $source);
+
+    expect($source->asked)->toHaveCount(1);
 });

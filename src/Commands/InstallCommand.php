@@ -92,31 +92,49 @@ final class InstallCommand
 
         $context = new Context(cwd: $cwd, theme: $theme, dryRun: $dryRun, force: $force);
 
-        // The theme comes first: it touches nothing here, and what it declares
-        // is what tells us which project to create when there is none.
-        try {
-            $fetched = $this->fetch($theme);
-            $schema = $fetched->schema;
-        } catch (InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
-            error($exception->getMessage());
+        $registry = DriverRegistry::default();
+        $driver = $registry->detect($context);
+        $fetched = null;
 
+        // An empty directory has nothing to detect, and what to create is not
+        // a guess — the theme says which driver it was written for. That is
+        // the only reason to fetch before knowing the project.
+        if ($driver === null) {
+            if (! $this->isEmpty($cwd)) {
+                error("Nothing here looks like a project I know how to install into: {$cwd}");
+                note('Known drivers: '.implode(', ', $registry->names()));
+
+                return Command::FAILURE;
+            }
+
+            $fetched = $this->theme($theme, $output);
+
+            if ($fetched === null) {
+                return Command::FAILURE;
+            }
+
+            $driver = $this->startProject($registry, $fetched->schema, $context, $output);
+
+            if ($driver === null) {
+                return Command::FAILURE;
+            }
+        }
+
+        $output->writeln("  <info>✓</info> driver <options=bold>{$driver->name()}</>");
+
+        $fetched ??= $this->theme($theme, $output);
+
+        if ($fetched === null) {
             return Command::FAILURE;
         }
+
+        $schema = $fetched->schema;
 
         note(implode("\n", array_filter([
             "Project: {$cwd}",
             'Theme:   '.($schema->name ?? $theme),
             $schema->version !== null ? "Version: {$schema->version}" : null,
         ])));
-
-        $registry = DriverRegistry::default();
-        $driver = $registry->detect($context) ?? $this->startProject($registry, $schema, $context, $output);
-
-        if ($driver === null) {
-            return Command::FAILURE;
-        }
-
-        $output->writeln("  <info>✓</info> driver <options=bold>{$driver->name()}</>");
 
         try {
             $plan = Plan::from($schema, $driver->actions());
@@ -228,11 +246,11 @@ final class InstallCommand
     }
 
     /**
-     * Nothing here recognises the project, which is either a directory with
-     * the wrong thing in it or an empty one waiting for a project.
+     * An empty directory is a project waiting to exist, and which one is not a
+     * guess: the theme declares the driver it was written for, and the driver
+     * knows how to start it.
      *
-     * An empty one gets the project the theme was written for — the theme
-     * declares its driver, and the driver knows how to start it.
+     * The caller has already established that the directory is empty.
      */
     private function startProject(
         DriverRegistry $registry,
@@ -240,13 +258,6 @@ final class InstallCommand
         Context $context,
         OutputInterface $output,
     ): ?Driver {
-        if (! $this->isEmpty($context->cwd)) {
-            error("Nothing here looks like a project I know how to install into: {$context->cwd}");
-            note('Known drivers: '.implode(', ', $registry->names()));
-
-            return null;
-        }
-
         if ($schema->driver === null) {
             error("{$context->cwd} is empty, and the theme does not say which driver it was written for.");
 
@@ -464,9 +475,18 @@ final class InstallCommand
         $output->writeln('  <comment>could not roll back. Undo it by hand: '.$workspace->undoCommand().'</comment>');
     }
 
-    private function fetch(string $theme): FetchedTheme
+    /**
+     * The theme, or null with the reason already reported.
+     */
+    private function theme(string $theme, OutputInterface $output): ?FetchedTheme
     {
-        return spin(fn (): FetchedTheme => $this->themes->fetch($theme), "Fetching {$theme}");
+        try {
+            return spin(fn (): FetchedTheme => $this->themes->fetch($theme), "Fetching {$theme}");
+        } catch (InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
+            error($exception->getMessage());
+
+            return null;
+        }
     }
 
     /**
