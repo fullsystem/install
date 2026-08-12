@@ -37,7 +37,7 @@ theme, so the same command can install any frontend.
 
 | step | |
 |---|---|
-| `fetch` | clones the theme and reads its `schema.json` |
+| `fetch` | downloads the theme archive and reads its `schema.json` |
 | `composer` | installs the PHP packages the theme declares |
 | `npm` | installs the JS packages the theme declares |
 | `strip` | removes the starter kit files |
@@ -59,10 +59,38 @@ fails while the project is still untouched.
 If the build fails, the project is restored to the commit it was on before
 the first step. Nothing is left half-installed.
 
+### How a theme is fetched
+
+A theme is downloaded as an archive, not cloned:
+
+```
+https://github.com/<theme>/archive/refs/heads/main.zip
+```
+
+Download rather than `git clone` because an HTTP request has somewhere to put
+an `Authorization` header and a clone does not — authenticating a clone means
+embedding the credential in the URL, where it lands in the shell history and
+in the clone's own `.git/config`. Exclusive themes are the reason; for public
+themes the difference is invisible.
+
+Two consequences worth knowing:
+
+**Archives are unpacked defensively.** A zip entry can name a path like
+`../../etc`, which would write outside the extraction directory. Every entry
+is checked before extraction, and an archive with a single bad entry is
+rejected whole rather than unpacked halfway.
+
+**The default branch is a moving target.** Today the fetch takes whatever
+`main` currently holds, so two people running the same command in the same
+week can get different trees. Pinning a theme to a tag is not supported yet.
+
+`git` is still required — the rollback uses it — but it is the *project's*
+git, not the theme's. Nothing about the theme touches git anymore.
+
 ## Requirements
 
 - A Laravel project with a clean git working tree
-- PHP 8.3+
+- PHP 8.3+ with `ext-zip`
 - `git`, `composer`, `node` and `npm` on PATH
 - [cpx](https://github.com/laravel/cpx) — `composer global require cpx/cpx`
 
@@ -257,10 +285,9 @@ by types. If you replace `pages/auth` while keeping Fortify's controllers, a
 change on either side compiles fine and fails at runtime. Pin the starter kit
 commit you derived from and diff it when the kit updates.
 
-**Private themes are not supported yet.** Terminal prompts are disabled
-during clone, so a theme you cannot reach fails immediately instead of
-hanging on a credential prompt. Authenticating for exclusive themes is what
-`login` will be for.
+**Private themes are not supported yet.** A theme you cannot reach is a 404
+on the archive, and the run stops there. Authenticating for exclusive themes
+is what `login` will be for, and the download is what makes it possible.
 
 **Rollback restores tracked files only.** `node_modules` is not tracked by
 git, so after a failed run it holds packages the restored `package.json` no
