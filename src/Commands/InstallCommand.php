@@ -12,7 +12,6 @@ use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
 use FullSystem\Install\Install\CopySource;
 use FullSystem\Install\Install\Verify;
-use FullSystem\Install\RestorePoint;
 use FullSystem\Install\Result;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
@@ -24,6 +23,7 @@ use FullSystem\Install\Themes\GitHubSource;
 use FullSystem\Install\Themes\InvalidArchive;
 use FullSystem\Install\Themes\InvalidTheme;
 use FullSystem\Install\Themes\ThemeSource;
+use FullSystem\Install\Workspace;
 use Laravel\Prompts\Prompt;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -138,18 +138,22 @@ final class InstallCommand
             $output->writeln(['', '  <comment>the theme declares no actions</comment>']);
         }
 
-        $point = new RestorePoint;
+        $workspace = new Workspace;
 
         if (! $context->dryRun) {
-            $established = $point->establish($context);
+            $opened = $workspace->open($context);
 
-            if (! $established->ok) {
-                error((string) $established->reason);
+            if (! $opened->ok) {
+                error((string) $opened->reason);
 
                 return Command::FAILURE;
             }
 
-            $output->writeln('  <info>✓</info> restore point at <options=bold>'.RestorePoint::NAME.'</>');
+            $output->writeln([
+                '',
+                '  <info>✓</info> working on <options=bold>'.Workspace::WORK_BRANCH.'</>, '.
+                'branched from <options=bold>'.$workspace->origin().'</>',
+            ]);
         }
 
         $result = $this->install($plan, $context, $output, $driver, $fetched);
@@ -158,7 +162,7 @@ final class InstallCommand
             error((string) $result->reason);
 
             if (! $context->dryRun) {
-                $this->rollBack($point, $context, $output);
+                $this->rollBack($workspace, $context, $output);
             }
 
             return Command::FAILURE;
@@ -170,9 +174,53 @@ final class InstallCommand
             return Command::SUCCESS;
         }
 
-        note("Review with:  git diff\nUndo it all:  ".$point->undoCommand());
+        return $this->finish($workspace, $context, $output, $schema);
+    }
 
-        outro('Done — but copying the theme files is not wired yet.');
+    /**
+     * The work is done and committed on its own branch. Whether it becomes the
+     * project is the user's call — and until they make it, the branch they
+     * started on is untouched, so the app they had still runs.
+     */
+    private function finish(Workspace $workspace, Context $context, OutputInterface $output, Schema $schema): int
+    {
+        $theme = $schema->name ?? $context->theme;
+        $message = "Install {$theme}".($schema->version !== null ? " {$schema->version}" : '');
+
+        if (! $workspace->keep($context, $message)) {
+            error('the install worked, but the result could not be committed.');
+
+            return Command::FAILURE;
+        }
+
+        $origin = (string) $workspace->origin();
+
+        note(
+            "{$theme} is installed on ".Workspace::WORK_BRANCH.', and it built and tested clean.
+
+'.
+            'You are on that branch now, so you can run the app and see it before deciding.
+'.
+            'Saying no keeps the branch — nothing is lost either way.'
+        );
+
+        if (! confirm("Apply it to {$origin}?", default: true)) {
+            $workspace->leave($context);
+
+            outro('Left on '.Workspace::WORK_BRANCH.'. Apply it later with: '.$workspace->applyCommand());
+
+            return Command::SUCCESS;
+        }
+
+        $applied = $workspace->apply($context, $message);
+
+        if (! $applied->ok) {
+            error((string) $applied->reason);
+
+            return Command::FAILURE;
+        }
+
+        outro("Applied to {$origin}.");
 
         return Command::SUCCESS;
     }
@@ -259,17 +307,17 @@ final class InstallCommand
      * either end of it. Nothing is ever pushed, so this only ever undoes what
      * happened locally.
      */
-    private function rollBack(RestorePoint $point, Context $context, OutputInterface $output): void
+    private function rollBack(Workspace $workspace, Context $context, OutputInterface $output): void
     {
         $output->writeln('');
 
-        if ($point->restore($context)) {
-            $output->writeln('  <comment>rolled back to '.RestorePoint::NAME.'</comment>');
+        if ($workspace->restore($context)) {
+            $output->writeln('  <comment>rolled back — the project is as you left it</comment>');
 
             return;
         }
 
-        $output->writeln('  <comment>could not roll back. Undo it by hand: '.$point->undoCommand().'</comment>');
+        $output->writeln('  <comment>could not roll back. Undo it by hand: '.$workspace->undoCommand().'</comment>');
     }
 
     private function fetch(string $theme): FetchedTheme

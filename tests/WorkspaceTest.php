@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use FullSystem\Install\Checks\CleanWorktree;
 use FullSystem\Install\Context;
-use FullSystem\Install\RestorePoint;
 use FullSystem\Install\Support\Git;
+use FullSystem\Install\Workspace;
 
 function project(bool $gitignore = true): string
 {
@@ -38,7 +38,7 @@ describe('a project without git', function () {
     it('starts a repository and commits, so there is something to go back to', function () {
         $path = project();
 
-        $result = (new RestorePoint)->establish(context($path));
+        $result = (new Workspace)->open(context($path));
 
         expect($result->ok)->toBeTrue()
             ->and((new Git)->isInsideWorkTree($path))->toBeTrue()
@@ -53,7 +53,7 @@ describe('a project without git', function () {
     it('refuses to commit a project with no .gitignore', function () {
         $path = project(gitignore: false);
 
-        $result = (new RestorePoint)->establish(context($path));
+        $result = (new Workspace)->open(context($path));
 
         expect($result->ok)->toBeFalse()
             ->and($result->reason)->toContain('.gitignore')
@@ -66,7 +66,7 @@ describe('a project with git', function () {
         $path = repository(project());
         $before = (new Git)->head($path);
 
-        (new RestorePoint)->establish(context($path));
+        (new Workspace)->open(context($path));
 
         expect((new Git)->head($path))->toBe($before)
             ->and((new Git)->commitCount($path))->toBe(1);
@@ -75,28 +75,43 @@ describe('a project with git', function () {
     it('marks the point by name, so it survives a run that dies halfway', function () {
         $path = repository(project());
 
-        (new RestorePoint)->establish(context($path));
+        (new Workspace)->open(context($path));
 
-        exec('git -C '.escapeshellarg($path).' rev-parse '.escapeshellarg(RestorePoint::NAME), $output, $status);
+        exec('git -C '.escapeshellarg($path).' rev-parse '.escapeshellarg(Workspace::RESTORE_POINT), $output, $status);
 
         expect($status)->toBe(0);
     });
 
-    it('can be established twice without complaining', function () {
+    /**
+     * Someone who said no to applying is left on the work branch. Running
+     * again from there would delete the branch they are standing on.
+     */
+    it('refuses to run from the work branch of an earlier install', function () {
         $path = repository(project());
-        $point = new RestorePoint;
+        (new Workspace)->open(context($path));
 
-        $point->establish(context($path));
+        $result = (new Workspace)->open(context($path));
 
-        expect($point->establish(context($path))->ok)->toBeTrue();
+        expect($result->ok)->toBeFalse()
+            ->and($result->reason)->toContain('earlier install');
+    });
+
+    it('branches from wherever the user was', function () {
+        $path = repository(project());
+        exec('git -C '.escapeshellarg($path).' checkout -q -b develop');
+
+        $workspace = new Workspace;
+        $workspace->open(context($path));
+
+        expect($workspace->origin())->toBe('develop');
     });
 });
 
 describe('going back', function () {
     it('restores files the run changed and removes files it added', function () {
         $path = repository(project());
-        $point = new RestorePoint;
-        $point->establish(context($path));
+        $point = new Workspace;
+        $point->open(context($path));
 
         file_put_contents($path.'/routes/web.php', 'wrecked');
         touchFile($path, 'resources/js/new-file.tsx', 'added');
@@ -109,8 +124,8 @@ describe('going back', function () {
     });
 
     it('tells you how to do it by hand', function () {
-        expect((new RestorePoint)->undoCommand())
-            ->toContain(RestorePoint::NAME)
+        expect((new Workspace)->undoCommand())
+            ->toContain(Workspace::RESTORE_POINT)
             ->toContain('git reset --hard');
     });
 });

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use FullSystem\Install\RestorePoint;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\Git;
+use FullSystem\Install\Workspace;
 use Symfony\Component\Console\Command\Command;
 use Tests\Support\FakeProcess;
 use Tests\Support\FakeThemeSource;
@@ -34,7 +34,7 @@ it('starts a repository when the project has none', function () {
 
     expect($tester->getStatusCode())->toBe(Command::SUCCESS)
         ->and((new Git)->isInsideWorkTree($project))->toBeTrue()
-        ->and($tester->getDisplay())->toContain(RestorePoint::NAME);
+        ->and($tester->getDisplay())->toContain(Workspace::WORK_BRANCH);
 });
 
 it('puts back what an action deleted before a later one failed', function () {
@@ -60,20 +60,13 @@ it('leaves the deletion in place when everything succeeded', function () {
         ->and(file_exists($project.'/resources/js/pages/dashboard.tsx'))->toBeFalse();
 });
 
-it('does not commit the result, so the diff is there to review', function () {
+it('commits the result on the work branch, leaving the tree clean', function () {
     $project = laravelProject();
     touchFile($project, 'resources/js/pages/dashboard.tsx', 'the original');
 
     cli(['path' => $project], destructiveTheme());
 
-    expect((new Git)->dirtyFiles($project))->not->toBeEmpty();
-});
-
-it('tells you how to undo it', function () {
-    $display = cli(['path' => laravelProject()], destructiveTheme())->getDisplay();
-
-    expect($display)->toContain('git reset --hard')
-        ->and($display)->toContain('git diff');
+    expect((new Git)->dirtyFiles($project))->toBeEmpty();
 });
 
 it('touches no repository during a dry run', function () {

@@ -98,6 +98,35 @@ class Git
         return $this->succeeds(['git', 'branch', $name], $cwd);
     }
 
+    public function createBranch(string $cwd, string $name): bool
+    {
+        $this->succeeds(['git', 'branch', '-D', $name], $cwd);
+
+        return $this->succeeds(['git', 'checkout', '-q', '-b', $name], $cwd);
+    }
+
+    public function checkout(string $cwd, string $target): bool
+    {
+        return $this->succeeds(['git', 'checkout', '-q', $target], $cwd);
+    }
+
+    /**
+     * A merge commit rather than a fast-forward: it gives the install one
+     * point in the history to point at, and one commit to revert.
+     */
+    public function merge(string $cwd, string $branch, string $message): bool
+    {
+        return $this->succeeds(
+            ['git', ...self::IDENTITY, 'merge', '--no-ff', '-q', '-m', $message, $branch],
+            $cwd,
+        );
+    }
+
+    public function deleteBranch(string $cwd, string $name): bool
+    {
+        return $this->succeeds(['git', 'branch', '-D', $name], $cwd);
+    }
+
     public function restoreTo(string $cwd, string $point): bool
     {
         return $this->succeeds(['git', 'reset', '--hard', $point], $cwd)
