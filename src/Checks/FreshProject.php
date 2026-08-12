@@ -103,12 +103,4 @@ final class FreshProject implements Check
             ? null
             : count($models).' model(s) beyond '.self::SHIPPED_MODEL;
     }
-
-    /*
-     * Deliberately not counted: migrations. The React kit adds passkeys and
-     * two-factor on top of the skeleton's three, and which of them exist
-     * depends on the flags passed to `laravel new` — counting them would fail
-     * a project nobody has touched.
-     *
-     */
 }

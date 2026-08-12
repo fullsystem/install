@@ -6,6 +6,7 @@ use FullSystem\Install\Application;
 use FullSystem\Install\Commands\InstallCommand;
 use FullSystem\Install\Themes\ThemeSource;
 use Symfony\Component\Console\Tester\ApplicationTester;
+use Tests\Support\FakeProcess;
 use Tests\Support\FakeThemeSource;
 
 /**
@@ -31,6 +32,22 @@ function tempDirectory(): string
 }
 
 /**
+ * Writes a file inside $root, creating any missing parent directories.
+ */
+function touchFile(string $root, string $path, string $contents = ''): string
+{
+    $full = $root.'/'.$path;
+
+    if (! is_dir(dirname($full))) {
+        mkdir(dirname($full), 0755, true);
+    }
+
+    file_put_contents($full, $contents);
+
+    return $full;
+}
+
+/**
  * The smallest tree LaravelReact::detect() recognises: artisan and
  * composer.json for the backend, the Inertia adapter for the variant.
  */
@@ -50,11 +67,14 @@ function laravelProject(): string
     return $path;
 }
 
-function cli(array $argv = [], ?ThemeSource $themes = null): ApplicationTester
+function cli(array $argv = [], ?ThemeSource $themes = null, ?FakeProcess $processes = null): ApplicationTester
 {
     // Never the real GitHub: tests must not depend on the network, and the
     // command's job here is what it does with the schema, not how it got it.
-    $application = new Application(new InstallCommand($themes ?? FakeThemeSource::returning()));
+    $application = new Application(new InstallCommand(
+        $themes ?? FakeThemeSource::returning(),
+        $processes ?? new FakeProcess,
+    ));
     $application->setAutoExit(false);
     $application->setCatchExceptions(false);
 

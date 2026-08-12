@@ -28,6 +28,6 @@ it('does not mistake a laravel project without the react adapter', function () {
     expect(cli(['path' => $path])->getStatusCode())->toBe(Command::FAILURE);
 });
 
-it('says that nothing executes yet', function () {
-    expect(cli(['path' => laravelProject()])->getDisplay())->toContain('No action runs yet');
+it('says so when the theme has nothing to run', function () {
+    expect(cli(['path' => laravelProject()])->getDisplay())->toContain('declares no actions');
 });

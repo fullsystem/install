@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FullSystem\Install\Commands;
 
+use FullSystem\Install\Actions\Executor;
 use FullSystem\Install\Actions\Plan;
 use FullSystem\Install\Checks\Check;
 use FullSystem\Install\Context;
@@ -11,6 +12,8 @@ use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
+use FullSystem\Install\Support\ProcessRunner;
+use FullSystem\Install\Support\SystemProcess;
 use FullSystem\Install\Themes\DownloadFailed;
 use FullSystem\Install\Themes\GitHubSource;
 use FullSystem\Install\Themes\InvalidArchive;
@@ -46,7 +49,10 @@ final class InstallCommand
 {
     public const string DEFAULT_THEME = 'fullsystem/starter';
 
-    public function __construct(private readonly ThemeSource $themes = new GitHubSource) {}
+    public function __construct(
+        private readonly ThemeSource $themes = new GitHubSource,
+        private readonly ProcessRunner $processes = new SystemProcess,
+    ) {}
 
     public function __invoke(
         InputInterface $input,
@@ -120,46 +126,25 @@ final class InstallCommand
             return Command::FAILURE;
         }
 
-        $this->showPlan($plan, $output);
-
-        if ($context->dryRun) {
-            outro('Dry run. Nothing was written.');
+        if ($plan->isEmpty()) {
+            outro('The theme declares no actions.');
 
             return Command::SUCCESS;
         }
 
-        outro('No action runs yet.');
+        $result = (new Executor($output, $this->processes))->run($plan, $context);
+
+        if (! $result->ok) {
+            error((string) $result->reason);
+
+            return Command::FAILURE;
+        }
+
+        outro($context->dryRun
+            ? 'Dry run. Nothing was written.'
+            : 'Done — but copying the theme files is not wired yet.');
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * The plan is printed on every run, not only with --dry-run: this command
-     * deletes files, and what it is about to do should never be a surprise.
-     */
-    private function showPlan(Plan $plan, OutputInterface $output): void
-    {
-        if ($plan->isEmpty()) {
-            $output->writeln(['', '  <comment>The theme declares no actions.</comment>']);
-
-            return;
-        }
-
-        foreach (Plan::PHASES as $phase) {
-            $actions = $plan->actions($phase);
-
-            if ($actions === []) {
-                continue;
-            }
-
-            $output->writeln(['', "  <info>{$phase}</info>"]);
-
-            foreach ($actions as $index => $action) {
-                $output->writeln(sprintf('    %d. %-9s %s', $index + 1, $action->name, $action->summary()));
-            }
-        }
-
-        $output->writeln('');
     }
 
     private function fetch(string $theme): Schema

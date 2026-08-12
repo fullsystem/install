@@ -36,7 +36,7 @@ final readonly class Action
         $summary = match (true) {
             is_array($this->parameters) && array_is_list($this->parameters) => match (count($this->parameters)) {
                 0 => '',
-                1 => (string) json_encode($this->parameters[0]),
+                1 => self::describe($this->parameters[0]),
                 default => count($this->parameters).' items',
             },
             is_array($this->parameters) => implode(', ', array_keys($this->parameters)),
@@ -45,9 +45,16 @@ final readonly class Action
         };
 
         foreach ($this->modifiers as $key => $value) {
-            $summary .= $value === true ? " ({$key})" : " ({$key}: ".json_encode($value).')';
+            $summary .= $value === true ? " ({$key})" : " ({$key}: ".self::describe($value).')';
         }
 
         return trim($summary);
+    }
+
+    private static function describe(mixed $value): string
+    {
+        return is_string($value)
+            ? $value
+            : (string) json_encode($value, JSON_UNESCAPED_SLASHES);
     }
 }
