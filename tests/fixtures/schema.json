@@ -1,0 +1,59 @@
+{
+  "name": "fullsystem/starter",
+  "version": "0.1.0",
+  "driver": "laravel-react",
+  "source": "stubs",
+  "phases": {
+    "pre-install": [
+      {
+        "composer": [
+          "laravel/reverb",
+          "laravel/horizon",
+          "intervention/image",
+          "nunomaduro/essentials"
+        ]
+      },
+      {
+        "composer": ["baconfy/factory-payload"],
+        "dev": true
+      },
+      {
+        "packages": [
+          "@laravel/echo-react",
+          "react-markdown",
+          "pusher-js",
+          "date-fns"
+        ]
+      },
+      {
+        "artisan": ["reverb:install"]
+      },
+      {
+        "remove": [
+          "components.json",
+          "pnpm-workspace.yaml",
+          "routes/web.php",
+          "routes/settings.php",
+          "resources/js/pages",
+          "resources/js/layouts",
+          "resources/js/components",
+          "resources/js/hooks/use-mobile.tsx",
+          "database/migrations/0001_01_01_000000_create_users_table.php"
+        ]
+      },
+      {
+        "shadcn": {
+          "preset": "vega",
+          "template": "laravel",
+          "components": "all",
+          "pointer": true
+        }
+      }
+    ],
+    "post-install": [
+      {
+        "artisan": ["wayfinder:generate --with-form"]
+      }
+    ]
+  }
+}

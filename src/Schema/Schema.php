@@ -17,6 +17,9 @@ final readonly class Schema
 {
     public const string FILE = 'schema.json';
 
+    /** Where the theme keeps the files that mirror the project root. */
+    public const string DEFAULT_SOURCE = 'stubs';
+
     /**
      * @param  array<mixed>  $phases
      */
@@ -24,6 +27,8 @@ final readonly class Schema
         public ?string $name,
         public ?string $version,
         public array $phases,
+        public string $source = self::DEFAULT_SOURCE,
+        public ?string $driver = null,
     ) {}
 
     public static function fromFile(string $path): self
@@ -41,6 +46,14 @@ final readonly class Schema
         return self::fromJson($contents);
     }
 
+    /**
+     * @param  array<mixed>  $data
+     */
+    private static function text(array $data, string $key): ?string
+    {
+        return isset($data[$key]) && is_string($data[$key]) && $data[$key] !== '' ? $data[$key] : null;
+    }
+
     public static function fromJson(string $json): self
     {
         try {
@@ -55,9 +68,11 @@ final readonly class Schema
         }
 
         return new self(
-            name: isset($data['name']) && is_string($data['name']) ? $data['name'] : null,
-            version: isset($data['version']) && is_string($data['version']) ? $data['version'] : null,
+            name: self::text($data, 'name'),
+            version: self::text($data, 'version'),
             phases: isset($data['phases']) && is_array($data['phases']) ? $data['phases'] : [],
+            source: self::text($data, 'source') ?? self::DEFAULT_SOURCE,
+            driver: self::text($data, 'driver'),
         );
     }
 }
