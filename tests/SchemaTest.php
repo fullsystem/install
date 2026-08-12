@@ -33,6 +33,15 @@ describe('the reference schema', function () {
         expect($plan->isEmpty())->toBeFalse();
     });
 
+    it('requires only checks the driver offers', function () {
+        $offered = array_map(
+            fn ($check) => $check->name(),
+            (new LaravelReact)->optionalChecks(),
+        );
+
+        expect(Schema::fromFile(referenceSchema())->requires)->each->toBeIn($offered);
+    });
+
     it('declares only phases a theme owns', function () {
         $phases = array_keys(Schema::fromFile(referenceSchema())->phases);
 

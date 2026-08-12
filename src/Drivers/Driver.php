@@ -33,11 +33,22 @@ interface Driver
     public function detect(Context $context): bool;
 
     /**
-     * What must be true before anything is written.
+     * What must be true before anything is written, for every theme.
      *
      * @return list<Check>
      */
     public function checks(): array;
+
+    /**
+     * Checks a theme may ask for by name in `requires`.
+     *
+     * Some conditions belong to the theme rather than to the environment: a
+     * theme that rewrites the users migration needs a fresh project, and one
+     * that only adds a module would never pass that check.
+     *
+     * @return list<Check>
+     */
+    public function optionalChecks(): array;
 
     /**
      * The actions a theme may declare, by name.

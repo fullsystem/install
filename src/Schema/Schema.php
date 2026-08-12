@@ -22,6 +22,7 @@ final readonly class Schema
 
     /**
      * @param  array<mixed>  $phases
+     * @param  list<string>  $requires  names of checks this theme depends on
      */
     public function __construct(
         public ?string $name,
@@ -29,6 +30,7 @@ final readonly class Schema
         public array $phases,
         public string $source = self::DEFAULT_SOURCE,
         public ?string $driver = null,
+        public array $requires = [],
     ) {}
 
     public static function fromFile(string $path): self
@@ -54,6 +56,19 @@ final readonly class Schema
         return isset($data[$key]) && is_string($data[$key]) && $data[$key] !== '' ? $data[$key] : null;
     }
 
+    /**
+     * @param  array<mixed>  $data
+     * @return list<string>
+     */
+    private static function names(array $data, string $key): array
+    {
+        if (! isset($data[$key]) || ! is_array($data[$key])) {
+            return [];
+        }
+
+        return array_values(array_filter($data[$key], is_string(...)));
+    }
+
     public static function fromJson(string $json): self
     {
         try {
@@ -73,6 +88,7 @@ final readonly class Schema
             phases: isset($data['phases']) && is_array($data['phases']) ? $data['phases'] : [],
             source: self::text($data, 'source') ?? self::DEFAULT_SOURCE,
             driver: self::text($data, 'driver'),
+            requires: self::names($data, 'requires'),
         );
     }
 }

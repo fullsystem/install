@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FullSystem\Install\Drivers;
 
+use FullSystem\Install\Checks\FreshProject;
 use FullSystem\Install\Context;
 
 /**
@@ -46,10 +47,15 @@ final class LaravelReact implements Driver
     public function checks(): array
     {
         return [
-            // laravel-project        artisan and composer.json are present
-            // components-directory   there is a starter kit frontend to replace
-            // clean-worktree         there is a commit to roll back to
-            // fresh-project          this does not look like a project with real work in it
+            // clean-worktree   there is a commit to roll back to — arrives with
+            //                  the actions that can shell out to git
+        ];
+    }
+
+    public function optionalChecks(): array
+    {
+        return [
+            new FreshProject,
         ];
     }
 

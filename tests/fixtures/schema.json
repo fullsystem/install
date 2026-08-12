@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "driver": "laravel-react",
   "source": "stubs",
+  "requires": [
+    "fresh-project"
+  ],
   "phases": {
     "pre-install": [
       {
@@ -14,7 +17,9 @@
         ]
       },
       {
-        "composer": ["baconfy/factory-payload"],
+        "composer": [
+          "baconfy/factory-payload"
+        ],
         "dev": true
       },
       {
@@ -26,7 +31,9 @@
         ]
       },
       {
-        "artisan": ["reverb:install"]
+        "artisan": [
+          "reverb:install"
+        ]
       },
       {
         "remove": [
@@ -52,7 +59,9 @@
     ],
     "post-install": [
       {
-        "artisan": ["wayfinder:generate --with-form"]
+        "artisan": [
+          "wayfinder:generate --with-form"
+        ]
       }
     ]
   }

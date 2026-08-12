@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FullSystem\Install\Commands;
 
 use FullSystem\Install\Actions\Plan;
+use FullSystem\Install\Checks\Check;
 use FullSystem\Install\Context;
 use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
@@ -93,10 +94,6 @@ final class InstallCommand
 
         note("Project: {$cwd}\nTheme:   {$theme}\nDriver:  {$driver->name()}");
 
-        if (! $this->passesChecks($driver, $context, $output)) {
-            return Command::FAILURE;
-        }
-
         try {
             $schema = $this->fetch($theme);
         } catch (InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
@@ -112,9 +109,14 @@ final class InstallCommand
 
         try {
             $plan = Plan::from($schema, $driver->actions());
+            $checks = $this->checksFor($driver, $schema);
         } catch (InvalidSchema $exception) {
             error($exception->getMessage());
 
+            return Command::FAILURE;
+        }
+
+        if (! $this->passesChecks($checks, $context, $output)) {
             return Command::FAILURE;
         }
 
@@ -166,16 +168,53 @@ final class InstallCommand
     }
 
     /**
+     * The checks the driver always runs, plus the ones this theme asked for.
+     *
+     * A theme naming a check the driver does not offer is refused here, with
+     * the same reasoning as an unknown action: better to stop before the run
+     * than to quietly not check what the theme said it depends on.
+     *
+     * @return list<Check>
+     */
+    private function checksFor(Driver $driver, Schema $schema): array
+    {
+        $available = [];
+
+        foreach ($driver->optionalChecks() as $check) {
+            $available[$check->name()] = $check;
+        }
+
+        $required = [];
+
+        foreach ($schema->requires as $name) {
+            if (! isset($available[$name])) {
+                throw new InvalidSchema(
+                    "The theme requires a check this driver does not offer: {$name}. ".
+                    ($available === []
+                        ? 'This driver offers none.'
+                        : 'It offers: '.implode(', ', array_keys($available)).'.')
+                );
+            }
+
+            $required[] = $available[$name];
+        }
+
+        return [...$driver->checks(), ...$required];
+    }
+
+    /**
      * A failing check is either a verdict or a question.
      *
      * The ones describing what the command needs to work at all stop the run.
      * The ones describing risk are asked, and no is an answer — with --force
      * standing in for a yes given up front, which is also what happens when
      * there is no terminal to ask in.
+     *
+     * @param  list<Check>  $checks
      */
-    private function passesChecks(Driver $driver, Context $context, OutputInterface $output): bool
+    private function passesChecks(array $checks, Context $context, OutputInterface $output): bool
     {
-        foreach ($driver->checks() as $check) {
+        foreach ($checks as $check) {
             $result = $check->run($context);
 
             if ($result->ok) {
