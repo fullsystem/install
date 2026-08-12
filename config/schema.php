@@ -3,5 +3,5 @@
 declare(strict_types=1);
 
 return [
-    "name" => "baconfy/ui"
+    'name' => 'fullsystem/starter',
 ];
