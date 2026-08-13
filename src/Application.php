@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class Application extends ConsoleApplication
 {
-    public const string VERSION = '0.1.0';
+    public const string VERSION = '1.0.0';
 
     private const string DEFAULT_COMMAND = 'install';
 
