@@ -181,27 +181,34 @@ Then run the same search again and **show the user what is left**. Everything
 that remains should be one of those explanatory sentences. Anything else is a
 broken URL you are about to hand over as finished.
 
-## 5. Make the README describe this recipe
+## 5. Write the README
 
-The README you extracted describes the boilerplate's own example — the packages
-it happens to declare, the frontend it happens to ship. Left alone, it is a
-project whose front page is about somebody else's work.
+Replace it entirely. The one you extracted describes the boilerplate's own
+example — packages it happens to declare, a frontend it happens to ship — and
+none of that is true of the recipe being started here.
 
-Rewrite it from the answer to question 2. What this recipe is for, what it
-brings, who would install it. Keep the parts that are true of any recipe — how
-it is installed, that the installer works on a branch and rolls back — and
-replace everything that was describing the example.
+Two things go in, and nothing else:
 
-**Do not let it promise what the schema does not do.** `schema.json` still
-declares the boilerplate's packages and commands, and a README announcing one
-thing while the recipe installs another is worse than the stale one you started
-from. Either say plainly that the recipe is not written yet, or say what the
-schema actually declares. Which of those it becomes is the next conversation,
-and it belongs to `AGENTS.md`.
+**What the project is.** A couple of sentences from the last answer in step 1.
 
-If they had nothing to tell you yet, say so in the README itself rather than
-leaving the example in place. "This recipe does not do anything yet" is honest;
-a description of reverb and horizon that nobody chose is not.
+**How to run it**, so whoever opens the repository next knows where to start:
+
+````markdown
+Give this URL to Claude, Cursor, or whatever you code with:
+
+```
+https://raw.githubusercontent.com/<org>/<repo>/main/SKILL.md
+```
+````
+
+Stop there. It is tempting to describe what the recipe installs, but the recipe
+does not install anything yet — `schema.json` is still the boilerplate's, and a
+front page announcing packages nobody chose is worse than the stale one you
+started from. What it eventually does gets written when it eventually does it.
+
+If they had nothing to tell you about the project, say that in the README rather
+than leaving the example in place. "This recipe does not do anything yet" is
+honest.
 
 ## 6. Give it a repository
 
