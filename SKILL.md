@@ -83,20 +83,29 @@ Send them to the one that matches what is actually missing.
 
 ## 3. Download the boilerplate and extract it
 
-A recipe project starts as a copy of one that already works:
+**`fullsystem/recipe`** is how a starter kit begins — the structure a recipe
+should have, the conventions it ships with, and the documentation that travels
+with it. It is the only thing you download here:
 
 ```bash
-curl -fsSL -o /tmp/fullsystem-recipe.zip https://github.com/fullsystem/starter-kit/archive/refs/heads/main.zip
+curl -fsSL -o /tmp/fullsystem-recipe.zip https://github.com/fullsystem/recipe/archive/refs/heads/main.zip
 unzip -q /tmp/fullsystem-recipe.zip -d /tmp/fullsystem-recipe
-cp -R /tmp/fullsystem-recipe/starter-kit-main/. .
+cp -R /tmp/fullsystem-recipe/recipe-main/. .
 rm -rf /tmp/fullsystem-recipe /tmp/fullsystem-recipe.zip
 ```
 
-Two things that go wrong here if nobody says them:
+**Do not confuse it with `fullsystem/starter-kit`.** That one is a finished
+recipe — the one the installer reaches for when nobody names another, meant to
+be installed into applications. `fullsystem/recipe` is where a new one begins.
+Different repositories, different jobs; downloading the wrong one gives you
+somebody's finished work instead of a starting point.
+
+Two more things that go wrong here if nobody says them:
 
 - GitHub wraps the contents of every archive in one top-level folder named
-  `<repo>-<ref>`, so this unpacks as `starter-kit-main/`. **That wrapper is not part
-  of the project** — what belongs in the working directory is what is inside it.
+  `<repo>-<ref>`, so this unpacks as `recipe-main/`. **That wrapper is not
+  part of the project** — what belongs in the working directory is what is
+  inside it.
 - `cp -R <source>/. <target>` is deliberate. It copies hidden files, and
   `.gitignore` is one of them.
 
@@ -105,25 +114,33 @@ it is not, the extraction did not land where you think it did.
 
 ## 4. Point it at the new repository
 
-What you extracted still refers to the repository it came from. Two different
-fixes, and doing only the first is the common mistake.
+**Do not skip this, and do not leave it for later.** What you extracted names no
+repository at all: every place one belongs is written as `{org}` and `{repo}`,
+waiting to be filled. Handed over unfilled, it is a project whose own
+documentation tells people to install `{org}/{repo}`, and whose recipe is called
+`{org}/{repo}` when the installer prints it.
 
-**The documentation carries placeholders.** `{org}` and `{repo}` appear where
-the repository is named — the install URL in `README.md` above all. Replace both
-with the answers from step 1. It is a search and replace with no judgement in
-it: do not go hunting for other mentions of the source repository. If a string
-is meant to change, it is a placeholder.
+Replace both, everywhere they appear, with the answers from step 1:
 
-**`SKILL.md` carries a literal URL**, because a skill loaded from a raw URL has
-to be able to download the repository it belongs to. Point that URL at the new
-repository. A recipe whose skill fetches somebody else's recipe is broken in a way
-nobody notices until it has already set up the wrong thing.
+```bash
+grep -rlF -e '{org}' -e '{repo}' . --exclude-dir=.git
+```
 
-Leave alone, in that same file, the sentences that *discuss* `{org}` and
-`{repo}`. They are talking about the placeholders, not using them, and rewriting
-those turns the instructions into nonsense.
+That list is the work. `README.md` and `AGENTS.md` are the obvious ones;
+`SKILL.md` and the **`name` in `schema.json`** are the ones that get forgotten.
 
-Then confirm no `{org}` or `{repo}` survives anywhere it was meant to change.
+It is a search and replace with no judgement in it. Do not go hunting for other
+mentions of where the project came from — if a string is meant to change, it is
+a placeholder.
+
+The one exception: sentences that *discuss* `{org}` and `{repo}` rather than use
+them. `AGENTS.md` explains the convention, and `SKILL.md` may too. Rewriting
+those turns an explanation into nonsense — a paragraph about "the `acme` and
+`dashboard` placeholders" helps nobody.
+
+Then run the same search again and **show the user what is left**. Everything
+that remains should be one of those explanatory sentences. Anything else is a
+broken URL you are about to hand over as finished.
 
 ## 5. Prove it runs
 

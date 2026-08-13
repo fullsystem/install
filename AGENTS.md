@@ -11,11 +11,16 @@ It deletes files, rewrites migrations and runs processes. All of it happens on
 a branch, and any failure puts the project back where it started. Nothing is
 ever pushed.
 
-The default recipe it installs,
-[`fullsystem/starter-kit`](https://github.com/fullsystem/starter-kit), lives in a
-separate repository and documents itself there — questions about what a recipe
-contains, rather than what the command does with one, are answered by its
-README and its `AGENTS.md`.
+Two repositories sit next to this one, and telling them apart matters — pointing
+at the wrong one is the mistake that has already been made once:
+
+| | |
+|---|---|
+| [`fullsystem/starter-kit`](https://github.com/fullsystem/starter-kit) | **The default recipe.** What the installer fetches when nobody passes `--recipe`. A finished recipe, meant to be installed into applications. |
+| [`fullsystem/recipe`](https://github.com/fullsystem/recipe) | **How a starter kit begins.** The structure a recipe should have, the conventions it ships with, and the documentation that travels with it. What `SKILL.md` downloads. |
+
+Each documents itself; questions about what a recipe contains, rather than what
+the command does with one, are answered over there.
 
 The two are coupled only at runtime, over an HTTP download: no symlink, no path
 repository, no local wiring. Editing a local checkout of the recipe does **not**
@@ -158,8 +163,9 @@ describes risk.
 ## The schema format
 
 What the parser has to accept, summarised. The documentation a recipe author
-reads lives in the [fullsystem/starter-kit](https://github.com/fullsystem/starter-kit)
-README — a change to the format has to reach it too.
+reads lives in the boilerplate's `AGENTS.md`, over in
+[fullsystem/recipe](https://github.com/fullsystem/recipe) — a change to the
+format has to reach it too.
 
 ```json
 {
