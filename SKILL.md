@@ -14,22 +14,44 @@ this file. Do not anticipate it, and do not improvise what it covers.
 
 Seven things happen, and then you hand over.
 
-## 1. Ask two things
+## 1. Ask, one question at a time
 
-Ask both together, in one message, before anything is downloaded. Finding out
-afterwards means going back over files you already touched.
+Three answers are needed before anything is downloaded. **Ask for them one at a
+time, waiting for each.** Three questions in a single message read as a form,
+and forms get answered in a hurry — half the fields, in the wrong order, or with
+"whatever you think".
 
-> **1. Which GitHub organisation and repository will this recipe live in?**
+**First, the organisation.**
 
-Take an **org** and a **repo** separately. Both are GitHub names: letters,
-digits, hyphens, underscores and dots, not starting with a hyphen. A personal
-account is a valid org — `xpto/my-recipe` is as good an answer as
-`acme/dashboard`.
+> Which GitHub organisation will this recipe live in?
 
-If they do not know yet, that is a fine answer. Say that the placeholders stay
-in the documentation until someone fills them in, and carry on.
+A personal account is a valid answer; `xpto` is as good as `acme`. GitHub names
+are letters, digits, hyphens, underscores and dots, and never start with a
+hyphen.
 
-> **2. What is this recipe for?**
+**Then the repository.**
+
+> And what should the repository be called?
+
+Same rules. If they do not know where any of it will live yet, that is a fine
+answer: say the placeholders stay in the documentation until someone fills them
+in, and carry on.
+
+**The directory is usually not a question.** The repository name is the obvious
+folder name, so use `./<repo>` whenever it is free — missing, or empty apart
+from a `.DS_Store`. State which directory you are using; do not ask permission
+for the obvious.
+
+Ask only when it is taken:
+
+> `./<repo>` already has files in it. Which directory should I use instead?
+
+Never unpack into a directory with somebody's work in it. If they had no repo
+name to give, ask for the directory outright.
+
+**Last, what it is for.**
+
+> What is this recipe for?
 
 What kind of application it is meant to produce, what it should bring with it,
 who would install it. A sentence is enough; a paragraph is better.
@@ -98,14 +120,19 @@ Send them to the one that matches what is actually missing.
 
 **`fullsystem/recipe`** is how a starter kit begins — the structure a recipe
 should have, the conventions it ships with, and the documentation that travels
-with it. It is the only thing you download here:
+with it. It is the only thing you download here, and it goes into the directory
+settled in step 1 — `<dir>` below:
 
 ```bash
+mkdir -p <dir>
 curl -fsSL -o /tmp/fullsystem-recipe.zip https://github.com/fullsystem/recipe/archive/refs/heads/main.zip
 unzip -q /tmp/fullsystem-recipe.zip -d /tmp/fullsystem-recipe
-cp -R /tmp/fullsystem-recipe/recipe-main/. .
+cp -R /tmp/fullsystem-recipe/recipe-main/. <dir>/
 rm -rf /tmp/fullsystem-recipe /tmp/fullsystem-recipe.zip
 ```
+
+Everything after this happens inside `<dir>`, so change into it now rather than
+prefixing every later command with it.
 
 **Do not confuse it with `fullsystem/starter-kit`.** That one is a finished
 recipe — the one the installer reaches for when nobody names another, meant to
@@ -117,13 +144,12 @@ Two more things that go wrong here if nobody says them:
 
 - GitHub wraps the contents of every archive in one top-level folder named
   `<repo>-<ref>`, so this unpacks as `recipe-main/`. **That wrapper is not
-  part of the project** — what belongs in the working directory is what is
-  inside it.
+  part of the project** — what belongs in `<dir>` is what is inside it.
 - `cp -R <source>/. <target>` is deliberate. It copies hidden files, and
   `.gitignore` is one of them.
 
-Confirm `AGENTS.md` is at the root of the working directory before going on. If
-it is not, the extraction did not land where you think it did.
+Confirm `AGENTS.md` is at the root of `<dir>` before going on. If it is not,
+the extraction did not land where you think it did.
 
 ## 4. Point it at the new repository
 
@@ -245,7 +271,7 @@ over a project you never saw working.
 The project is on disk, it is pointed at the right repository, and it runs.
 Your part is finished.
 
-`AGENTS.md` in the working directory is what knows how recipes work — the format,
+`AGENTS.md` in the project is what knows how recipes work — the format,
 what a recipe may declare, what the installer refuses, how to build and test one.
 **Read it now**, and work from it rather than from anything you assumed while
 reading this file.
