@@ -8,7 +8,7 @@ use FullSystem\Install\Schema\Schema;
 
 function planFrom(array $phases, array $known = ['composer', 'packages', 'remove', 'shadcn', 'artisan']): Plan
 {
-    return Plan::from(new Schema('acme/theme', '1.0.0', $phases), $known);
+    return Plan::from(new Schema('acme/recipe', '1.0.0', $phases), $known);
 }
 
 it('reads the actions of a phase in the order they were declared', function () {
@@ -50,7 +50,7 @@ it('finds the action whichever order the keys are in', function () {
     expect($plan->actions('pre-install')[0]->name)->toBe('composer');
 });
 
-it('is empty when the theme declares no phases', function () {
+it('is empty when the recipe declares no phases', function () {
     expect(planFrom([])->isEmpty())->toBeTrue()
         ->and(planFrom([])->count())->toBe(0);
 });
@@ -90,10 +90,10 @@ describe('what it refuses', function () {
     })->throws(InvalidSchema::class);
 
     /**
-     * install is the driver copying source/ over the project. A theme that
+     * install is the driver copying source/ over the project. A recipe that
      * declares it is describing something it does not control.
      */
-    it('refuses a phase the theme does not own', function (string $phase) {
+    it('refuses a phase the recipe does not own', function (string $phase) {
         planFrom([$phase => [['remove' => ['a']]]]);
     })->throws(InvalidSchema::class)->with(['install', 'verify', 'whenever']);
 });

@@ -17,15 +17,15 @@ it('still answers to the init alias', function () {
 
 it('installs fullsystem/starter by default', function () {
     expect(cli(['path' => laravelProject()])->getDisplay())
-        ->toContain(InstallCommand::DEFAULT_THEME);
+        ->toContain(InstallCommand::DEFAULT_RECIPE);
 });
 
-it('accepts another theme', function () {
-    expect(cli(['path' => laravelProject(), '--theme' => 'laravel/starter-kit'])->getDisplay())
+it('accepts another recipe', function () {
+    expect(cli(['path' => laravelProject(), '--recipe' => 'laravel/starter-kit'])->getDisplay())
         ->toContain('laravel/starter-kit');
 });
 
-it('accepts the -t shortcut', function () {
-    expect(cli(['path' => laravelProject(), '-t' => 'laravel/starter-kit'])->getDisplay())
+it('accepts the -r shortcut', function () {
+    expect(cli(['path' => laravelProject(), '-r' => 'laravel/starter-kit'])->getDisplay())
         ->toContain('laravel/starter-kit');
 });

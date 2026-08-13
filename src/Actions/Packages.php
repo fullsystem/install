@@ -13,7 +13,7 @@ use FullSystem\Install\Support\SystemProcess;
  * Installs JavaScript packages.
  *
  * Which manager runs is decided here, from the lockfile the project already
- * has — a theme naming npm would be wrong in a pnpm project, and the theme has
+ * has — a recipe naming npm would be wrong in a pnpm project, and the recipe has
  * no way of knowing which one it landed in.
  */
 final readonly class Packages implements Handler

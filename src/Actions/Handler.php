@@ -8,7 +8,7 @@ use FullSystem\Install\Context;
 use FullSystem\Install\Result;
 
 /**
- * Executes one kind of action a theme can declare.
+ * Executes one kind of action a recipe can declare.
  *
  * The name is static so the registry can read it without building the
  * handler — handlers will take dependencies (a process runner, a filesystem)
@@ -17,7 +17,7 @@ use FullSystem\Install\Result;
 interface Handler
 {
     /**
-     * The key a theme writes in its schema.
+     * The key a recipe writes in its schema.
      */
     public static function name(): string;
 

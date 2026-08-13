@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace FullSystem\Install\Support;
 
 /**
- * Guards every path that comes from a theme — entries in an archive, paths in
+ * Guards every path that comes from a recipe — entries in an archive, paths in
  * `remove`. Absolute paths and anything climbing out with `..` are refused,
  * including the root itself, which would otherwise mean the whole project.
  */

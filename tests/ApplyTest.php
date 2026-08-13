@@ -7,16 +7,16 @@ use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\Git;
 use FullSystem\Install\Workspace;
 use Symfony\Component\Console\Command\Command;
-use Tests\Support\FakeThemeSource;
+use Tests\Support\FakeRecipeSource;
 
-function installableTheme(): FakeThemeSource
+function installableRecipe(): FakeRecipeSource
 {
-    $theme = tempDirectory();
-    touchFile($theme, 'source/resources/js/app.tsx', 'the theme app');
+    $recipe = tempDirectory();
+    touchFile($recipe, 'source/resources/js/app.tsx', 'the recipe app');
 
-    return FakeThemeSource::returning(
-        new Schema('acme/theme', '2.0.0', [], 'source'),
-        $theme,
+    return FakeRecipeSource::returning(
+        new Schema('acme/recipe', '2.0.0', [], 'source'),
+        $recipe,
     );
 }
 
@@ -28,7 +28,7 @@ function branchOf(string $project): ?string
 it('does the work on its own branch', function () {
     $project = laravelProject();
 
-    $display = cli(['path' => $project], installableTheme())->getDisplay();
+    $display = cli(['path' => $project], installableRecipe())->getDisplay();
 
     expect($display)->toContain(Workspace::WORK_BRANCH);
 });
@@ -37,18 +37,18 @@ describe('when the answer is yes', function () {
     it('applies the work to the branch the user started on', function () {
         $project = laravelProject();
 
-        $tester = cli(['path' => $project], installableTheme());
+        $tester = cli(['path' => $project], installableRecipe());
 
         expect($tester->getStatusCode())->toBe(Command::SUCCESS)
             ->and($tester->getDisplay())->toContain('Applied to')
             ->and(branchOf($project))->not->toBe(Workspace::WORK_BRANCH)
-            ->and(file_get_contents($project.'/resources/js/app.tsx'))->toBe('the theme app');
+            ->and(file_get_contents($project.'/resources/js/app.tsx'))->toBe('the recipe app');
     });
 
     it('leaves the work branch behind once it is merged', function () {
         $project = laravelProject();
 
-        cli(['path' => $project], installableTheme());
+        cli(['path' => $project], installableRecipe());
 
         exec('git -C '.escapeshellarg($project).' rev-parse --verify '.Workspace::WORK_BRANCH.' 2>/dev/null', $out, $status);
 
@@ -58,7 +58,7 @@ describe('when the answer is yes', function () {
     it('keeps the restore point, so it is still undoable', function () {
         $project = laravelProject();
 
-        cli(['path' => $project], installableTheme());
+        cli(['path' => $project], installableRecipe());
 
         exec('git -C '.escapeshellarg($project).' rev-parse --verify '.Workspace::RESTORE_POINT, $out, $status);
 
@@ -75,11 +75,11 @@ describe('when the answer is no', function () {
     it('keeps the branch and says how to apply it later', function () {
         $project = laravelProject();
         $workspace = new Workspace;
-        $context = new Context(cwd: $project, theme: 'acme/theme');
+        $context = new Context(cwd: $project, recipe: 'acme/recipe');
 
         $workspace->open($context);
-        touchFile($project, 'resources/js/app.tsx', 'the theme app');
-        $workspace->keep($context, 'Install acme/theme');
+        touchFile($project, 'resources/js/app.tsx', 'the recipe app');
+        $workspace->keep($context, 'Install acme/recipe');
 
         $workspace->leave($context);
 
@@ -91,15 +91,15 @@ describe('when the answer is no', function () {
     it('still has the work on the branch', function () {
         $project = laravelProject();
         $workspace = new Workspace;
-        $context = new Context(cwd: $project, theme: 'acme/theme');
+        $context = new Context(cwd: $project, recipe: 'acme/recipe');
 
         $workspace->open($context);
-        touchFile($project, 'resources/js/app.tsx', 'the theme app');
-        $workspace->keep($context, 'Install acme/theme');
+        touchFile($project, 'resources/js/app.tsx', 'the recipe app');
+        $workspace->keep($context, 'Install acme/recipe');
         $workspace->leave($context);
 
         exec('git -C '.escapeshellarg($project).' checkout -q '.Workspace::WORK_BRANCH);
 
-        expect(file_get_contents($project.'/resources/js/app.tsx'))->toBe('the theme app');
+        expect(file_get_contents($project.'/resources/js/app.tsx'))->toBe('the recipe app');
     });
 });

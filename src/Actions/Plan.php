@@ -8,16 +8,16 @@ use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
 
 /**
- * What a theme asked for, resolved against what the driver can do.
+ * What a recipe asked for, resolved against what the driver can do.
  *
- * Every action is checked here, before the first one runs. A theme declaring
+ * Every action is checked here, before the first one runs. A recipe declaring
  * something the driver cannot execute is refused whole rather than partway
  * through — being told at action four that action five is unknown would leave
  * the project half-prepared.
  */
 final readonly class Plan
 {
-    /** The phases a theme may declare. `install` belongs to the driver. */
+    /** The phases a recipe may declare. `install` belongs to the driver. */
     public const array PHASES = ['pre-install', 'post-install'];
 
     /**
@@ -36,7 +36,7 @@ final readonly class Plan
             if (! is_string($phase) || ! in_array($phase, self::PHASES, true)) {
                 throw new InvalidSchema(
                     'Unknown phase "'.(is_string($phase) ? $phase : get_debug_type($phase)).'". '.
-                    'A theme declares '.implode(' and ', self::PHASES).'; install is the driver copying source over the project.'
+                    'A recipe declares '.implode(' and ', self::PHASES).'; install is the driver copying source over the project.'
                 );
             }
 

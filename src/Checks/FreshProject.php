@@ -11,8 +11,8 @@ use FullSystem\Install\Support\Git;
 /**
  * Whether this still looks like a project nobody has built on yet.
  *
- * A theme that rewrites the users migration needs this; one that only adds a
- * module does not, and would never pass it. That is why the theme requires it
+ * A recipe that rewrites the users migration needs this; one that only adds a
+ * module does not, and would never pass it. That is why the recipe requires it
  * rather than it running for everyone.
  *
  * It is a heuristic, and it is built to be one: it gathers cheap signals and

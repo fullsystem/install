@@ -18,7 +18,7 @@ function act(string $name, mixed $parameters, array $modifiers = []): Action
 
 function ctx(?string $cwd = null, bool $dryRun = false): Context
 {
-    return new Context(cwd: $cwd ?? tempDirectory(), theme: 'acme/theme', dryRun: $dryRun);
+    return new Context(cwd: $cwd ?? tempDirectory(), recipe: 'acme/recipe', dryRun: $dryRun);
 }
 
 describe('composer', function () {
@@ -182,7 +182,7 @@ describe('artisan', function () {
         ]);
     });
 
-    it('allows the install commands a theme legitimately needs', function () {
+    it('allows the install commands a recipe legitimately needs', function () {
         $processes = new FakeProcess;
 
         $result = (new Artisan($processes))->run(ctx(), act('artisan', ['reverb:install']));

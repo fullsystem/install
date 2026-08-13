@@ -24,7 +24,7 @@ function freshProject(): string
 
 function freshness(string $path): Result
 {
-    return (new FreshProject)->run(new Context(cwd: $path, theme: 'acme/theme'));
+    return (new FreshProject)->run(new Context(cwd: $path, recipe: 'acme/recipe'));
 }
 
 it('passes on a project straight out of laravel new', function () {

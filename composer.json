@@ -1,11 +1,12 @@
 {
     "name": "fullsystem/install",
-    "description": "Replace the Laravel starter kit frontend with your own UI repository.",
+    "description": "Install a recipe into your project: files that mirror the project root, and a schema declaring what has to happen for them to work.",
     "type": "library",
     "license": "MIT",
     "keywords": [
         "laravel",
         "installer",
+        "recipe",
         "frontend",
         "shadcn"
     ],

@@ -31,7 +31,7 @@ function repository(string $path): string
 
 function context(string $path): Context
 {
-    return new Context(cwd: $path, theme: 'acme/theme');
+    return new Context(cwd: $path, recipe: 'acme/recipe');
 }
 
 describe('a project without git', function () {

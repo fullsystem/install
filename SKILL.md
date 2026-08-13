@@ -1,26 +1,26 @@
 ---
-name: fullsystem-theme
-description: Set up a new theme project for fullsystem/install — ask where it will live, check that composer and npm work, download the boilerplate, extract it, point it at the new repository, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how themes work. Use when someone wants to start a new theme, or points at this file.
+name: fullsystem-recipe
+description: Set up a new recipe project for fullsystem/install — ask where it will live, check that composer and npm work, download the boilerplate, extract it, point it at the new repository, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how recipes work. Use when someone wants to start a new recipe, or points at this file.
 ---
 
-# Setting up a new theme project
+# Setting up a new recipe project
 
-You are getting a theme project onto disk and running. That is the whole job.
+You are getting a recipe project onto disk and running. That is the whole job.
 
-**You are not learning the theme format here, and you are not writing a theme.**
+**You are not learning the recipe format here, and you are not writing a recipe.**
 The boilerplate you are about to download ships an `AGENTS.md` that knows what a
-theme is, what it may declare, and how to build one. It takes over at the end of
+recipe is, what it may declare, and how to build one. It takes over at the end of
 this file. Do not anticipate it, and do not improvise what it covers.
 
 Five things happen, and then you hand over.
 
 ## 1. Ask where the project will live
 
-> Which GitHub organisation and repository will this theme live in?
+> Which GitHub organisation and repository will this recipe live in?
 
 Take an **org** and a **repo** separately. Both are GitHub names: letters,
 digits, hyphens, underscores and dots, not starting with a hyphen. A personal
-account is a valid org — `xpto/my-theme` is as good an answer as
+account is a valid org — `xpto/my-recipe` is as good an answer as
 `acme/dashboard`.
 
 Ask now, because step 4 needs both, and finding out after everything is on disk
@@ -83,13 +83,13 @@ Send them to the one that matches what is actually missing.
 
 ## 3. Download the boilerplate and extract it
 
-A theme project starts as a copy of one that already works:
+A recipe project starts as a copy of one that already works:
 
 ```bash
-curl -fsSL -o /tmp/fullsystem-theme.zip https://github.com/fullsystem/starter/archive/refs/heads/main.zip
-unzip -q /tmp/fullsystem-theme.zip -d /tmp/fullsystem-theme
-cp -R /tmp/fullsystem-theme/starter-main/. .
-rm -rf /tmp/fullsystem-theme /tmp/fullsystem-theme.zip
+curl -fsSL -o /tmp/fullsystem-recipe.zip https://github.com/fullsystem/starter/archive/refs/heads/main.zip
+unzip -q /tmp/fullsystem-recipe.zip -d /tmp/fullsystem-recipe
+cp -R /tmp/fullsystem-recipe/starter-main/. .
+rm -rf /tmp/fullsystem-recipe /tmp/fullsystem-recipe.zip
 ```
 
 Two things that go wrong here if nobody says them:
@@ -116,7 +116,7 @@ is meant to change, it is a placeholder.
 
 **`SKILL.md` carries a literal URL**, because a skill loaded from a raw URL has
 to be able to download the repository it belongs to. Point that URL at the new
-repository. A theme whose skill fetches somebody else's theme is broken in a way
+repository. A recipe whose skill fetches somebody else's recipe is broken in a way
 nobody notices until it has already set up the wrong thing.
 
 Leave alone, in that same file, the sentences that *discuss* `{org}` and
@@ -162,10 +162,10 @@ over a project you never saw working.
 The project is on disk, it is pointed at the right repository, and it runs.
 Your part is finished.
 
-`AGENTS.md` in the working directory is what knows how themes work — the format,
-what a theme may declare, what the installer refuses, how to build and test one.
+`AGENTS.md` in the working directory is what knows how recipes work — the format,
+what a recipe may declare, what the installer refuses, how to build and test one.
 **Read it now**, and work from it rather than from anything you assumed while
 reading this file.
 
-If the user has not said what they want the theme to do yet, that is the
+If the user has not said what they want the recipe to do yet, that is the
 conversation to have next — and `AGENTS.md` is what tells you how to have it.

@@ -52,7 +52,7 @@ it('creates nothing during a dry run', function () {
 
 /**
  * A directory that was just created is empty, so there is a project to start
- * before anything can be installed — which needs the theme to say which one.
+ * before anything can be installed — which needs the recipe to say which one.
  */
 it('offers to start a project in a fresh directory', function () {
     $parent = tempDirectory();

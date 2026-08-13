@@ -10,7 +10,7 @@ use FullSystem\Install\Support\Filesystem;
 use FullSystem\Install\Support\SafePath;
 
 /**
- * Deletes paths the theme declares.
+ * Deletes paths the recipe declares.
  *
  * The irreversible one. The whole list is validated before a single path
  * goes: a bad path at position seven must not leave the project with six

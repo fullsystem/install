@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use FullSystem\Install\Themes\Archive;
-use FullSystem\Install\Themes\InvalidArchive;
+use FullSystem\Install\Recipes\Archive;
+use FullSystem\Install\Recipes\InvalidArchive;
 
 /**
  * Builds a zip from [entry name => contents]. Entry names are written
@@ -87,11 +87,11 @@ it('refuses an empty archive', function () {
 })->throws(InvalidArchive::class);
 
 /**
- * GitHub wraps everything in {repo}-{ref}/, but a theme served by a registry
+ * GitHub wraps everything in {repo}-{ref}/, but a recipe served by a registry
  * may not. Both have to work.
  */
 it('handles an archive with no wrapping directory', function () {
-    $zip = zipWith(['schema.json' => '{"name":"acme/theme"}']);
+    $zip = zipWith(['schema.json' => '{"name":"acme/recipe"}']);
     $into = tempDirectory();
 
     $root = Archive::extract($zip, $into);

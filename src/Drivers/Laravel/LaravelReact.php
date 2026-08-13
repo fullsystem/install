@@ -32,7 +32,7 @@ final class LaravelReact implements Driver
      * Two layers: `artisan` says Laravel, the Inertia adapter says React.
      *
      * A project straight out of `laravel new` without a starter kit has
-     * neither adapter installed, so nothing is detected and the theme's own
+     * neither adapter installed, so nothing is detected and the recipe's own
      * declaration decides.
      */
     public function detect(Context $context): bool
@@ -67,10 +67,10 @@ final class LaravelReact implements Driver
      * This driver happens to support all of them. A driver that does not —
      * laravel-vue has no shadcn to run — has to narrow this list, otherwise it
      * accepts a schema it cannot execute and hands back a project missing what
-     * the theme assumed.
+     * the recipe assumed.
      *
      * Copying source over the project and proving the result builds are the
-     * driver's own; a theme does not declare them.
+     * driver's own; a recipe does not declare them.
      *
      * @return list<string>
      */
@@ -80,14 +80,14 @@ final class LaravelReact implements Driver
     }
 
     /**
-     * Lint first, because it fixes: the theme's files arrive in the theme's
+     * Lint first, because it fixes: the recipe's files arrive in the recipe's
      * style, and the starter kit's own `composer test` runs `lint:check`
      * before the suite — so a formatting difference would fail an install
      * that worked.
      *
-     * Then the build, which catches what the theme's TypeScript cannot
+     * Then the build, which catches what the recipe's TypeScript cannot
      * resolve — the usual failure when a frontend is replaced wholesale. Then
-     * the suite, which catches what it broke behind: the theme ships its own
+     * the suite, which catches what it broke behind: the recipe ships its own
      * tests, and this is where they earn their place.
      *
      * Each step is skipped when the project does not declare it. The skeleton

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace FullSystem\Install\Themes;
+namespace FullSystem\Install\Recipes;
 
 use RuntimeException;
 

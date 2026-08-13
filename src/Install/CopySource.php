@@ -10,9 +10,9 @@ use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\SafePath;
 
 /**
- * The install phase: the theme's files land on the project.
+ * The install phase: the recipe's files land on the project.
  *
- * The driver's own, not something a theme declares — a theme that could
+ * The driver's own, not something a recipe declares — a recipe that could
  * decide when this happens could put it before the deletions that clear the
  * way for it.
  *
@@ -21,22 +21,22 @@ use FullSystem\Install\Support\SafePath;
  */
 final class CopySource
 {
-    public function run(Context $context, Schema $schema, string $themeDirectory): Result
+    public function run(Context $context, Schema $schema, string $recipeDirectory): Result
     {
         if (! SafePath::isSafe($schema->source)) {
-            return Result::fail("the theme's source is not a path inside itself: {$schema->source}");
+            return Result::fail("the recipe's source is not a path inside itself: {$schema->source}");
         }
 
-        $from = rtrim($themeDirectory, '/').'/'.SafePath::normalize($schema->source);
+        $from = rtrim($recipeDirectory, '/').'/'.SafePath::normalize($schema->source);
 
         if (! is_dir($from)) {
-            return Result::fail("the theme declares {$schema->source}/ but does not ship it");
+            return Result::fail("the recipe declares {$schema->source}/ but does not ship it");
         }
 
         $files = $this->filesIn($from);
 
         if ($files === []) {
-            return Result::fail("the theme's {$schema->source}/ is empty");
+            return Result::fail("the recipe's {$schema->source}/ is empty");
         }
 
         if ($context->dryRun) {
@@ -61,7 +61,7 @@ final class CopySource
     /**
      * Every file under the directory, as paths relative to it.
      *
-     * Entries are read through the same guard as everything else a theme
+     * Entries are read through the same guard as everything else a recipe
      * names: the archive was validated on extraction, and this is the second
      * place the same rule applies.
      *

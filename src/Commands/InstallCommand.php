@@ -12,18 +12,18 @@ use FullSystem\Install\Drivers\Driver;
 use FullSystem\Install\Drivers\DriverRegistry;
 use FullSystem\Install\Install\CopySource;
 use FullSystem\Install\Install\Verify;
+use FullSystem\Install\Recipes\DownloadFailed;
+use FullSystem\Install\Recipes\FetchedRecipe;
+use FullSystem\Install\Recipes\GitHubSource;
+use FullSystem\Install\Recipes\InvalidArchive;
+use FullSystem\Install\Recipes\InvalidRecipe;
+use FullSystem\Install\Recipes\RecipeSource;
 use FullSystem\Install\Result;
 use FullSystem\Install\Schema\InvalidSchema;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\ProcessRunner;
 use FullSystem\Install\Support\QuietProcess;
 use FullSystem\Install\Support\SystemProcess;
-use FullSystem\Install\Themes\DownloadFailed;
-use FullSystem\Install\Themes\FetchedTheme;
-use FullSystem\Install\Themes\GitHubSource;
-use FullSystem\Install\Themes\InvalidArchive;
-use FullSystem\Install\Themes\InvalidTheme;
-use FullSystem\Install\Themes\ThemeSource;
 use FullSystem\Install\Workspace;
 use Laravel\Prompts\Prompt;
 use Symfony\Component\Console\Attribute\Argument;
@@ -48,14 +48,14 @@ use function Laravel\Prompts\spin;
  */
 #[AsCommand(
     name: 'install|init',
-    description: 'Prepare a Laravel project to receive a theme.',
+    description: 'Prepare a project to receive a recipe.',
 )]
 final class InstallCommand
 {
-    public const string DEFAULT_THEME = 'fullsystem/starter';
+    public const string DEFAULT_RECIPE = 'fullsystem/starter';
 
     public function __construct(
-        private readonly ThemeSource $themes = new GitHubSource,
+        private readonly RecipeSource $recipes = new GitHubSource,
         private readonly ProcessRunner $processes = new SystemProcess,
     ) {}
 
@@ -66,8 +66,8 @@ final class InstallCommand
         #[Argument(description: 'Project directory')]
         string $path = '.',
 
-        #[Option(description: 'Theme to install', shortcut: 't')]
-        string $theme = self::DEFAULT_THEME,
+        #[Option(description: 'Recipe to install', shortcut: 'r')]
+        string $recipe = self::DEFAULT_RECIPE,
 
         #[Option(description: 'Answer yes to the risk checks up front')]
         bool $force = false,
@@ -87,14 +87,14 @@ final class InstallCommand
             return Command::FAILURE;
         }
 
-        $context = new Context(cwd: $cwd, theme: $theme, dryRun: $dryRun, force: $force);
+        $context = new Context(cwd: $cwd, recipe: $recipe, dryRun: $dryRun, force: $force);
 
         $registry = DriverRegistry::default();
         $driver = $registry->detect($context);
         $fetched = null;
 
         // An empty directory has nothing to detect, and what to create is not
-        // a guess — the theme says which driver it was written for. That is
+        // a guess — the recipe says which driver it was written for. That is
         // the only reason to fetch before knowing the project.
         if ($driver === null) {
             if (! $this->isEmpty($cwd)) {
@@ -104,7 +104,7 @@ final class InstallCommand
                 return Command::FAILURE;
             }
 
-            $fetched = $this->theme($theme, $output);
+            $fetched = $this->recipe($recipe, $output);
 
             if ($fetched === null) {
                 return Command::FAILURE;
@@ -119,14 +119,14 @@ final class InstallCommand
 
         $output->writeln("  <info>✓</info> driver <options=bold>{$driver->name()}</>");
 
-        $fetched ??= $this->theme($theme, $output);
+        $fetched ??= $this->recipe($recipe, $output);
 
         if ($fetched === null) {
             return Command::FAILURE;
         }
 
         try {
-            return $this->withTheme($fetched, $driver, $context, $output, $cwd, $theme);
+            return $this->withRecipe($fetched, $driver, $context, $output, $cwd, $recipe);
         } finally {
             // Whatever happened, the download does not stay behind.
             $fetched->discard();
@@ -135,21 +135,21 @@ final class InstallCommand
 
     /**
      * @param  string  $cwd  the resolved project directory
-     * @param  string  $theme  what the user asked for, before the theme named itself
+     * @param  string  $recipe  what the user asked for, before the recipe named itself
      */
-    private function withTheme(
-        FetchedTheme $fetched,
+    private function withRecipe(
+        FetchedRecipe $fetched,
         Driver $driver,
         Context $context,
         OutputInterface $output,
         string $cwd,
-        string $theme,
+        string $recipe,
     ): int {
         $schema = $fetched->schema;
 
         note(implode("\n", array_filter([
             "Project: {$cwd}",
-            'Theme:   '.($schema->name ?? $theme),
+            'Recipe:  '.($schema->name ?? $recipe),
             $schema->version !== null ? "Version: {$schema->version}" : null,
         ])));
 
@@ -167,9 +167,9 @@ final class InstallCommand
         }
 
         if ($plan->isEmpty()) {
-            // Not the same as nothing to do: the theme's files still land on
-            // the project, which is the one thing every theme does.
-            $output->writeln(['', '  <comment>the theme declares no actions</comment>']);
+            // Not the same as nothing to do: the recipe's files still land on
+            // the project, which is the one thing every recipe does.
+            $output->writeln(['', '  <comment>the recipe declares no actions</comment>']);
         }
 
         $workspace = new Workspace;
@@ -218,10 +218,10 @@ final class InstallCommand
      */
     private function finish(Workspace $workspace, Context $context, OutputInterface $output, Schema $schema): int
     {
-        $theme = $schema->name ?? $context->theme;
+        $recipe = $schema->name ?? $context->recipe;
         $message = sprintf(
             Workspace::INSTALL_COMMIT,
-            $theme.($schema->version !== null ? " {$schema->version}" : ''),
+            $recipe.($schema->version !== null ? " {$schema->version}" : ''),
         );
 
         if (! $workspace->keep($context, $message)) {
@@ -233,7 +233,7 @@ final class InstallCommand
         $origin = (string) $workspace->origin();
 
         note(
-            "{$theme} is installed on ".Workspace::WORK_BRANCH.', and it built and tested clean.
+            "{$recipe} is installed on ".Workspace::WORK_BRANCH.', and it built and tested clean.
 
 '.
             'You are on that branch now, so you can run the app and see it before deciding.
@@ -264,7 +264,7 @@ final class InstallCommand
 
     /**
      * An empty directory is a project waiting to exist, and which one is not a
-     * guess: the theme declares the driver it was written for, and the driver
+     * guess: the recipe declares the driver it was written for, and the driver
      * knows how to start it.
      *
      * The caller has already established that the directory is empty.
@@ -276,7 +276,7 @@ final class InstallCommand
         OutputInterface $output,
     ): ?Driver {
         if ($schema->driver === null) {
-            error("{$context->cwd} is empty, and the theme does not say which driver it was written for.");
+            error("{$context->cwd} is empty, and the recipe does not say which driver it was written for.");
 
             return null;
         }
@@ -284,7 +284,7 @@ final class InstallCommand
         $driver = $registry->get($schema->driver);
 
         if ($driver === null) {
-            error("The theme was written for a driver I do not have: {$schema->driver}.");
+            error("The recipe was written for a driver I do not have: {$schema->driver}.");
             note('Known drivers: '.implode(', ', $registry->names()));
 
             return null;
@@ -328,7 +328,7 @@ final class InstallCommand
         $output->writeln("  <info>✓</info> created a new {$driver->name()} project");
 
         // The tree only exists now, so detection is asked again rather than
-        // assumed: what was installed has to be what the theme expects.
+        // assumed: what was installed has to be what the recipe expects.
         $detected = $registry->detect($context);
 
         if ($detected === null) {
@@ -400,7 +400,7 @@ final class InstallCommand
     /**
      * The whole thing, in the only order it works.
      *
-     * pre-install clears the way and installs what the theme depends on;
+     * pre-install clears the way and installs what the recipe depends on;
      * install lands the files; post-install runs what needs them there —
      * wayfinder reads the routes it just received. Verification is last,
      * because it needs everything the phases before it produced.
@@ -410,7 +410,7 @@ final class InstallCommand
         Context $context,
         OutputInterface $output,
         Driver $driver,
-        FetchedTheme $fetched,
+        FetchedRecipe $fetched,
     ): Result {
         $executor = new Executor($output, $this->processes);
 
@@ -493,13 +493,13 @@ final class InstallCommand
     }
 
     /**
-     * The theme, or null with the reason already reported.
+     * The recipe, or null with the reason already reported.
      */
-    private function theme(string $theme, OutputInterface $output): ?FetchedTheme
+    private function recipe(string $recipe, OutputInterface $output): ?FetchedRecipe
     {
         try {
-            return spin(fn (): FetchedTheme => $this->themes->fetch($theme), "Fetching {$theme}");
-        } catch (InvalidTheme|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
+            return spin(fn (): FetchedRecipe => $this->recipes->fetch($recipe), "Fetching {$recipe}");
+        } catch (InvalidRecipe|DownloadFailed|InvalidArchive|InvalidSchema $exception) {
             error($exception->getMessage());
 
             return null;
@@ -507,11 +507,11 @@ final class InstallCommand
     }
 
     /**
-     * The checks the driver always runs, plus the ones this theme asked for.
+     * The checks the driver always runs, plus the ones this recipe asked for.
      *
-     * A theme naming a check the driver does not offer is refused here, with
+     * A recipe naming a check the driver does not offer is refused here, with
      * the same reasoning as an unknown action: better to stop before the run
-     * than to quietly not check what the theme said it depends on.
+     * than to quietly not check what the recipe said it depends on.
      *
      * @return list<Check>
      */
@@ -528,7 +528,7 @@ final class InstallCommand
         foreach ($schema->requires as $name) {
             if (! isset($available[$name])) {
                 throw new InvalidSchema(
-                    "The theme requires a check this driver does not offer: {$name}. ".
+                    "The recipe requires a check this driver does not offer: {$name}. ".
                     ($available === []
                         ? 'This driver offers none.'
                         : 'It offers: '.implode(', ', array_keys($available)).'.')

@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace FullSystem\Install\Themes;
+namespace FullSystem\Install\Recipes;
 
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\Filesystem;
 
 /**
- * A theme, unpacked somewhere temporary, and what it declares.
+ * A recipe, unpacked somewhere temporary, and what it declares.
  *
  * The directory matters as much as the schema: the install phase copies the
- * theme's source out of it.
+ * recipe's source out of it.
  */
-final readonly class FetchedTheme
+final readonly class FetchedRecipe
 {
     public function __construct(
         public Schema $schema,
@@ -22,8 +22,8 @@ final readonly class FetchedTheme
     ) {}
 
     /**
-     * Throws away the download. The theme is read and copied during the run;
-     * once it is over, keeping a copy of every theme ever installed under the
+     * Throws away the download. The recipe is read and copied during the run;
+     * once it is over, keeping a copy of every recipe ever installed under the
      * temp directory helps nobody.
      */
     public function discard(): void

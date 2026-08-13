@@ -19,7 +19,7 @@ it('stops when a directory has the wrong thing in it', function () {
         ->and($tester->getDisplay())->toContain(LaravelReact::NAME); // lists what it does know
 });
 
-it('cannot start a project when the theme does not name a driver', function () {
+it('cannot start a project when the recipe does not name a driver', function () {
     $tester = cli(['path' => tempDirectory()]);
 
     expect($tester->getStatusCode())->toBe(Command::FAILURE)
@@ -33,6 +33,6 @@ it('does not mistake a laravel project without the react adapter', function () {
     expect(cli(['path' => $path])->getStatusCode())->toBe(Command::FAILURE);
 });
 
-it('says so when the theme has nothing to run', function () {
+it('says so when the recipe has nothing to run', function () {
     expect(cli(['path' => laravelProject()])->getDisplay())->toContain('declares no actions');
 });

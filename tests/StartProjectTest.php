@@ -6,7 +6,7 @@ use FullSystem\Install\Context;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\Git;
 use FullSystem\Install\Workspace;
-use Tests\Support\FakeThemeSource;
+use Tests\Support\FakeRecipeSource;
 
 function log1(string $project): string
 {
@@ -18,7 +18,7 @@ function log1(string $project): string
 it('starts the repository on main, whatever init.defaultBranch says', function () {
     $project = laravelProject();
 
-    (new Workspace)->open(new Context(cwd: $project, theme: 'acme/theme'));
+    (new Workspace)->open(new Context(cwd: $project, recipe: 'acme/recipe'));
 
     exec('git -C '.escapeshellarg($project).' rev-parse --verify main', $out, $status);
 
@@ -28,7 +28,7 @@ it('starts the repository on main, whatever init.defaultBranch says', function (
 it('names the first commit after the project', function () {
     $project = laravelProject();
 
-    (new Workspace)->open(new Context(cwd: $project, theme: 'acme/theme'));
+    (new Workspace)->open(new Context(cwd: $project, recipe: 'acme/recipe'));
 
     expect(log1($project))->toBe('chore: start '.basename($project));
 });
@@ -37,7 +37,7 @@ it('branches off after that commit, not before it', function () {
     $project = laravelProject();
     $workspace = new Workspace;
 
-    $workspace->open(new Context(cwd: $project, theme: 'acme/theme'));
+    $workspace->open(new Context(cwd: $project, recipe: 'acme/recipe'));
 
     expect((new Git)->currentBranch($project))->toBe(Workspace::WORK_BRANCH)
         ->and($workspace->origin())->toBe('main');
@@ -45,15 +45,15 @@ it('branches off after that commit, not before it', function () {
 
 it('writes the install as a conventional commit', function () {
     $project = laravelProject();
-    $theme = tempDirectory();
-    touchFile($theme, 'source/resources/js/app.tsx', 'x');
+    $recipe = tempDirectory();
+    touchFile($recipe, 'source/resources/js/app.tsx', 'x');
 
-    cli(['path' => $project], FakeThemeSource::returning(
-        new Schema('acme/theme', '2.0.0', [], 'source'),
-        $theme,
+    cli(['path' => $project], FakeRecipeSource::returning(
+        new Schema('acme/recipe', '2.0.0', [], 'source'),
+        $recipe,
     ));
 
-    expect(log1($project))->toContain('feat: install acme/theme 2.0.0');
+    expect(log1($project))->toContain('feat: install acme/recipe 2.0.0');
 });
 
 it('leaves the project\'s own history alone when it already has one', function () {
@@ -62,7 +62,7 @@ it('leaves the project\'s own history alone when it already has one', function (
     exec('git -C '.escapeshellarg($project).' -c user.email=t@t -c user.name=t add -A');
     exec('git -C '.escapeshellarg($project).' -c user.email=t@t -c user.name=t commit -q -m "their own message"');
 
-    (new Workspace)->open(new Context(cwd: $project, theme: 'acme/theme'));
+    (new Workspace)->open(new Context(cwd: $project, recipe: 'acme/recipe'));
 
     expect(log1($project))->toBe('their own message');
 });

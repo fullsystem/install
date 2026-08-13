@@ -13,17 +13,17 @@ use FullSystem\Install\Context;
  *
  * The driver owns the execution line. It decides which steps run and in what
  * order, because that order is a property of the environment and not of the
- * theme — composer has to run before the routes are deleted, the shadcn
- * output has to land before the theme's own files overwrite it. A theme that
+ * recipe — composer has to run before the routes are deleted, the shadcn
+ * output has to land before the recipe's own files overwrite it. A recipe that
  * could reorder these would only gain the ability to get them wrong.
  *
- * What a theme declares is the content of each phase. What the driver decides
+ * What a recipe declares is the content of each phase. What the driver decides
  * is the sequence.
  */
 interface Driver
 {
     /**
-     * The identifier a theme declares and `--driver` accepts, e.g. `laravel-react`.
+     * The identifier a recipe declares and `--driver` accepts, e.g. `laravel-react`.
      */
     public function name(): string;
 
@@ -33,17 +33,17 @@ interface Driver
     public function detect(Context $context): bool;
 
     /**
-     * What must be true before anything is written, for every theme.
+     * What must be true before anything is written, for every recipe.
      *
      * @return list<Check>
      */
     public function checks(): array;
 
     /**
-     * Checks a theme may ask for by name in `requires`.
+     * Checks a recipe may ask for by name in `requires`.
      *
-     * Some conditions belong to the theme rather than to the environment: a
-     * theme that rewrites the users migration needs a fresh project, and one
+     * Some conditions belong to the recipe rather than to the environment: a
+     * recipe that rewrites the users migration needs a fresh project, and one
      * that only adds a module would never pass that check.
      *
      * @return list<Check>
@@ -51,11 +51,11 @@ interface Driver
     public function optionalChecks(): array;
 
     /**
-     * The actions a theme may declare, by name.
+     * The actions a recipe may declare, by name.
      *
-     * A theme asking for something absent from this list is refused: a driver
+     * A recipe asking for something absent from this list is refused: a driver
      * without shadcn cannot quietly skip it and hand back a project missing
-     * the components the theme assumed.
+     * the components the recipe assumed.
      *
      * @return list<string>
      */
@@ -64,9 +64,9 @@ interface Driver
     /**
      * What proves the result works, run after everything else.
      *
-     * The driver's own: a theme brings the tests, the driver decides they get
+     * The driver's own: a recipe brings the tests, the driver decides they get
      * run. Vue or Livewire would verify differently, and neither should have
-     * to be told how by whoever wrote the theme.
+     * to be told how by whoever wrote the recipe.
      *
      * Which of them exist depends on the project: the skeleton has no
      * `composer lint`, the React starter kit does. Asking for one that is not

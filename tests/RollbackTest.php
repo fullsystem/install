@@ -7,16 +7,16 @@ use FullSystem\Install\Support\Git;
 use FullSystem\Install\Workspace;
 use Symfony\Component\Console\Command\Command;
 use Tests\Support\FakeProcess;
-use Tests\Support\FakeThemeSource;
+use Tests\Support\FakeRecipeSource;
 
 /**
- * A theme that deletes something and then runs a command — which is where a
+ * A recipe that deletes something and then runs a command — which is where a
  * failure hurts, because the deletion already happened.
  */
-function destructiveTheme(): FakeThemeSource
+function destructiveRecipe(): FakeRecipeSource
 {
-    return FakeThemeSource::returning(new Schema(
-        name: 'acme/theme',
+    return FakeRecipeSource::returning(new Schema(
+        name: 'acme/recipe',
         version: '1.0.0',
         phases: [
             'pre-install' => [
@@ -30,7 +30,7 @@ function destructiveTheme(): FakeThemeSource
 it('starts a repository when the project has none', function () {
     $project = laravelProject();
 
-    $tester = cli(['path' => $project], destructiveTheme());
+    $tester = cli(['path' => $project], destructiveRecipe());
 
     expect($tester->getStatusCode())->toBe(Command::SUCCESS)
         ->and((new Git)->isInsideWorkTree($project))->toBeTrue()
@@ -43,7 +43,7 @@ it('puts back what an action deleted before a later one failed', function () {
 
     $processes = (new FakeProcess)->fails('composer require');
 
-    $tester = cli(['path' => $project], destructiveTheme(), $processes);
+    $tester = cli(['path' => $project], destructiveRecipe(), $processes);
 
     expect($tester->getStatusCode())->toBe(Command::FAILURE)
         ->and($tester->getDisplay())->toContain('rolled back')
@@ -54,7 +54,7 @@ it('leaves the deletion in place when everything succeeded', function () {
     $project = laravelProject();
     touchFile($project, 'resources/js/pages/dashboard.tsx', 'the original');
 
-    $tester = cli(['path' => $project], destructiveTheme());
+    $tester = cli(['path' => $project], destructiveRecipe());
 
     expect($tester->getStatusCode())->toBe(Command::SUCCESS)
         ->and(file_exists($project.'/resources/js/pages/dashboard.tsx'))->toBeFalse();
@@ -64,7 +64,7 @@ it('commits the result on the work branch, leaving the tree clean', function () 
     $project = laravelProject();
     touchFile($project, 'resources/js/pages/dashboard.tsx', 'the original');
 
-    cli(['path' => $project], destructiveTheme());
+    cli(['path' => $project], destructiveRecipe());
 
     expect((new Git)->dirtyFiles($project))->toBeEmpty();
 });
@@ -72,7 +72,7 @@ it('commits the result on the work branch, leaving the tree clean', function () 
 it('touches no repository during a dry run', function () {
     $project = laravelProject();
 
-    cli(['path' => $project, '--dry-run' => true], destructiveTheme());
+    cli(['path' => $project, '--dry-run' => true], destructiveRecipe());
 
     expect((new Git)->isInsideWorkTree($project))->toBeFalse();
 });

@@ -7,7 +7,7 @@ namespace FullSystem\Install\Schema;
 use JsonException;
 
 /**
- * What a theme declares about itself.
+ * What a recipe declares about itself.
  *
  * Only the identity is read so far. The phases are kept raw until the actions
  * that consume them exist — parsing them now would mean guessing the shape
@@ -17,12 +17,12 @@ final readonly class Schema
 {
     public const string FILE = 'schema.json';
 
-    /** Where the theme keeps the files that mirror the project root. */
+    /** Where the recipe keeps the files that mirror the project root. */
     public const string DEFAULT_SOURCE = 'src';
 
     /**
      * @param  array<mixed>  $phases
-     * @param  list<string>  $requires  names of checks this theme depends on
+     * @param  list<string>  $requires  names of checks this recipe depends on
      */
     public function __construct(
         public ?string $name,
@@ -36,7 +36,7 @@ final readonly class Schema
     public static function fromFile(string $path): self
     {
         if (! is_file($path)) {
-            throw new InvalidSchema('The theme has no '.self::FILE.'.');
+            throw new InvalidSchema('The recipe has no '.self::FILE.'.');
         }
 
         $contents = file_get_contents($path);

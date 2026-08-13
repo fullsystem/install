@@ -12,9 +12,9 @@ use FullSystem\Install\Support\SystemProcess;
 /**
  * Proof that what was installed works.
  *
- * Runs last, after post-install, because the commands a theme declares there
+ * Runs last, after post-install, because the commands a recipe declares there
  * produce what the build needs — wayfinder writes the route files that the
- * theme's own TypeScript imports, so building before it fails every time.
+ * recipe's own TypeScript imports, so building before it fails every time.
  *
  * Quiet on success: nobody wants a build log for an install that worked. On
  * failure the tail is printed, because that is the only thing that explains

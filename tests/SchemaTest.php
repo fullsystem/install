@@ -14,11 +14,11 @@ function referenceSchema(): string
 
 /**
  * tests/fixtures/schema.json is the reference example of the format — what a
- * theme author copies to start from. These tests are what keep it honest: if
+ * recipe author copies to start from. These tests are what keep it honest: if
  * the format changes and the example does not, they fail.
  */
 describe('the reference schema', function () {
-    it('is valid json a theme could ship', function () {
+    it('is valid json a recipe could ship', function () {
         $schema = Schema::fromFile(referenceSchema());
 
         expect($schema->name)->toBe('fullsystem/starter')
@@ -42,7 +42,7 @@ describe('the reference schema', function () {
         expect(Schema::fromFile(referenceSchema())->requires)->each->toBeIn($offered);
     });
 
-    it('declares only phases a theme owns', function () {
+    it('declares only phases a recipe owns', function () {
         $phases = array_keys(Schema::fromFile(referenceSchema())->phases);
 
         expect($phases)->each->toBeIn(Plan::PHASES);
@@ -84,7 +84,7 @@ describe('the reference schema', function () {
 
 describe('parsing', function () {
     it('defaults source to src', function () {
-        expect(Schema::fromJson('{"name":"acme/theme"}')->source)->toBe(Schema::DEFAULT_SOURCE);
+        expect(Schema::fromJson('{"name":"acme/recipe"}')->source)->toBe(Schema::DEFAULT_SOURCE);
     });
 
     it('leaves the optional fields null when absent', function () {
@@ -112,7 +112,7 @@ describe('parsing', function () {
         Schema::fromJson('"just a string"');
     })->throws(InvalidSchema::class);
 
-    it('refuses a theme with no schema file', function () {
+    it('refuses a recipe with no schema file', function () {
         Schema::fromFile('/no/such/schema.json');
     })->throws(InvalidSchema::class, Schema::FILE);
 });

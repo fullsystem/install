@@ -12,12 +12,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class Application extends ConsoleApplication
 {
-    public const string VERSION = '1.0.1';
+    public const string VERSION = '2.0.0';
 
     private const string DEFAULT_COMMAND = 'install';
 
     /**
-     * The command is injectable so tests can hand it a theme source that does
+     * The command is injectable so tests can hand it a recipe source that does
      * not reach the network.
      */
     public function __construct(?InstallCommand $install = null)

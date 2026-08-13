@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use FullSystem\Install\Schema\Schema;
 use Symfony\Component\Console\Command\Command;
-use Tests\Support\FakeThemeSource;
+use Tests\Support\FakeRecipeSource;
 
-function themeWithActions(): FakeThemeSource
+function recipeWithActions(): FakeRecipeSource
 {
-    return FakeThemeSource::returning(new Schema('acme/theme', '1.0.0', [
+    return FakeRecipeSource::returning(new Schema('acme/recipe', '1.0.0', [
         'pre-install' => [
             ['composer' => ['laravel/reverb', 'laravel/horizon']],
             ['composer' => ['pestphp/pest'], 'dev' => true],
@@ -21,14 +21,14 @@ function themeWithActions(): FakeThemeSource
 }
 
 it('prints the plan and writes nothing', function () {
-    $tester = cli(['path' => laravelProject(), '--dry-run' => true], themeWithActions());
+    $tester = cli(['path' => laravelProject(), '--dry-run' => true], recipeWithActions());
 
     expect($tester->getStatusCode())->toBe(Command::SUCCESS)
         ->and($tester->getDisplay())->toContain('Nothing was written');
 });
 
-it('lists every action in the order the theme declared them', function () {
-    $display = cli(['path' => laravelProject(), '--dry-run' => true], themeWithActions())->getDisplay();
+it('lists every action in the order the recipe declared them', function () {
+    $display = cli(['path' => laravelProject(), '--dry-run' => true], recipeWithActions())->getDisplay();
 
     $positions = [];
 
@@ -47,7 +47,7 @@ it('lists every action in the order the theme declared them', function () {
 });
 
 it('shows the modifiers of an action', function () {
-    expect(cli(['path' => laravelProject(), '--dry-run' => true], themeWithActions())->getDisplay())
+    expect(cli(['path' => laravelProject(), '--dry-run' => true], recipeWithActions())->getDisplay())
         ->toContain('(dev)');
 });
 
@@ -56,13 +56,13 @@ it('shows the modifiers of an action', function () {
  * never do it silently.
  */
 it('prints the plan on a normal run too', function () {
-    expect(cli(['path' => laravelProject()], themeWithActions())->getDisplay())
+    expect(cli(['path' => laravelProject()], recipeWithActions())->getDisplay())
         ->toContain('pre-install')
         ->toContain('artisan');
 });
 
 it('refuses an action the driver does not know', function () {
-    $source = FakeThemeSource::returning(new Schema('acme/theme', '1.0.0', [
+    $source = FakeRecipeSource::returning(new Schema('acme/recipe', '1.0.0', [
         'pre-install' => [['docker' => ['up']]],
     ]));
 

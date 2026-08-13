@@ -10,9 +10,9 @@ use FullSystem\Install\Drivers\Laravel\LaravelReact;
 /**
  * Holds the known drivers and answers which one to use.
  *
- * Resolution order is deliberate: the project decides, the theme declares
+ * Resolution order is deliberate: the project decides, the recipe declares
  * what it is compatible with, and the flag is the escape hatch for when the
- * detection is wrong. Cross-checking those is the point — a theme built for
+ * detection is wrong. Cross-checking those is the point — a recipe built for
  * laravel-react pointed at a Vue project should stop before the first
  * destructive step, not halfway through it.
  */

@@ -12,7 +12,7 @@ use RuntimeException;
 final class Filesystem
 {
     /**
-     * A private directory under the system temp dir, for the theme download
+     * A private directory under the system temp dir, for the recipe download
      * and anything else that must not land in the project.
      */
     public static function temporaryDirectory(string $prefix): string
@@ -54,7 +54,7 @@ final class Filesystem
      * Clears out what earlier runs left behind.
      *
      * A run killed halfway never reaches its own cleanup, so without this the
-     * temp directory collects a copy of every theme ever downloaded. Only
+     * temp directory collects a copy of every recipe ever downloaded. Only
      * directories with our prefix, and only ones old enough that no run could
      * still be using them.
      */

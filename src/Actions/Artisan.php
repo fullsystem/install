@@ -13,9 +13,9 @@ use FullSystem\Install\Support\SystemProcess;
  * Runs artisan commands.
  *
  * A denylist rather than an allowlist. An allowlist looked safer, but it also
- * blocked `reverb:install` and every other `*:install` a theme legitimately
+ * blocked `reverb:install` and every other `*:install` a recipe legitimately
  * needs, and it would never keep up with the ecosystem. What is blocked is
- * what destroys data — and that is not a security boundary either: a theme
+ * what destroys data — and that is not a security boundary either: a recipe
  * that can add a Composer package can already run code. It is here to stop an
  * accident, not an attacker.
  *
@@ -28,7 +28,7 @@ final readonly class Artisan implements Handler
 
     private const string FLAG = '/^--?[a-z0-9][a-z0-9-]*(=[\w.\/-]+)?$/i';
 
-    /** Commands that can lose data no theme should be able to lose for you. */
+    /** Commands that can lose data no recipe should be able to lose for you. */
     private const array DESTRUCTIVE = [
         'db:wipe',
         'migrate:fresh',
@@ -62,7 +62,7 @@ final readonly class Artisan implements Handler
             }
 
             if (in_array(strtolower($name), self::DESTRUCTIVE, true)) {
-                return Result::fail("{$name} destroys data and cannot be declared by a theme.");
+                return Result::fail("{$name} destroys data and cannot be declared by a recipe.");
             }
 
             $badFlags = Parameters::rejecting($argv, self::FLAG);

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace FullSystem\Install\Themes;
+namespace FullSystem\Install\Recipes;
 
 use FullSystem\Install\Support\SafePath;
 use ZipArchive;
 
 /**
- * Unpacks a downloaded theme.
+ * Unpacks a downloaded recipe.
  *
  * A zip entry can name a path like `../../etc`, which would write outside the
  * destination. Every entry is checked before a single one is written, and an
@@ -18,7 +18,7 @@ use ZipArchive;
 final class Archive
 {
     /**
-     * Unpacks into $into and returns the directory the theme actually lives
+     * Unpacks into $into and returns the directory the recipe actually lives
      * in, which may be one level down.
      */
     public static function extract(string $archive, string $into): string

@@ -19,12 +19,12 @@ is no backport branch yet.
 
 ## What counts as a vulnerability here
 
-The installer's job is to run instructions declared by a theme. That makes the
+The installer's job is to run instructions declared by a recipe. That makes the
 boundary between "working as designed" and "vulnerable" worth stating.
 
 **In scope** — report these:
 
-- A theme escaping the project directory: a `remove` path, or an archive entry,
+- A recipe escaping the project directory: a `remove` path, or an archive entry,
   that writes or deletes outside the directory being installed into.
 - Anything that reaches a shell. Every command is built as an argument list and
   executed without a shell; a place where a value is concatenated into a
@@ -37,13 +37,13 @@ boundary between "working as designed" and "vulnerable" worth stating.
 
 **Out of scope** — these are the design, not defects:
 
-- A theme installing a Composer or npm package that runs code. Package managers
-  execute install scripts and plugins by design; a theme that can add a
+- A recipe installing a Composer or npm package that runs code. Package managers
+  execute install scripts and plugins by design; a recipe that can add a
   dependency can run code, and no validation here changes that. The protection
-  against a hostile theme is choosing which theme you install, not this tool.
-- A theme deleting files it declared in `remove`, when the paths stay inside
+  against a hostile recipe is choosing which recipe you install, not this tool.
+- A recipe deleting files it declared in `remove`, when the paths stay inside
   the project and the run was confirmed. That is the whole point of the tool.
-- Commands a theme declares that are allowed and non-destructive, even if you
+- Commands a recipe declares that are allowed and non-destructive, even if you
   personally would not run them.
 
 If you are unsure which side something falls on, report it privately and we
@@ -52,11 +52,11 @@ will work it out.
 ## What the tool guarantees
 
 - Commands are executed as argument lists, never through a shell.
-- Paths declared by a theme are validated against the project root before
+- Paths declared by a recipe are validated against the project root before
   anything is deleted, and the whole list is validated before the first
   deletion happens.
 - Destructive steps are shown and confirmed; `--force` is how you say yes in
   advance, and without a terminal the answer is no.
 - A failed run restores the project to the commit it started from.
 
-None of these protect you from a theme you should not have trusted.
+None of these protect you from a recipe you should not have trusted.

@@ -1,8 +1,8 @@
 # fullsystem/install
 
-A command that takes a Laravel project and replaces its frontend with a theme.
+A command that takes a Laravel project and replaces its frontend with a recipe.
 
-A theme is a repository with two parts: a directory of files mirroring the
+A recipe is a repository with two parts: a directory of files mirroring the
 project root, and a `schema.json` declaring what has to happen for those files
 to work — packages to install, files to remove, commands to run. This package
 runs that.
@@ -11,14 +11,14 @@ It deletes files, rewrites migrations and runs processes. All of it happens on
 a branch, and any failure puts the project back where it started. Nothing is
 ever pushed.
 
-The default theme it installs,
+The default recipe it installs,
 [`fullsystem/starter`](https://github.com/fullsystem/starter), lives in a
-separate repository and documents itself there — questions about what a theme
+separate repository and documents itself there — questions about what a recipe
 contains, rather than what the command does with one, are answered by its
 README and its `AGENTS.md`.
 
 The two are coupled only at runtime, over an HTTP download: no symlink, no path
-repository, no local wiring. Editing a local checkout of the theme does **not**
+repository, no local wiring. Editing a local checkout of the recipe does **not**
 affect a local run; the installer fetches whatever `main` holds on GitHub.
 
 ## Where the documentation lives
@@ -32,19 +32,19 @@ with an assistant, and this is what the assistant reads — so guidance about
 writing code belongs here, not in the README.
 
 `SKILL.md` is the third audience: an assistant pointed at this repository by
-URL, with nothing else read, asked to set someone up with a new theme project.
+URL, with nothing else read, asked to set someone up with a new recipe project.
 It covers exactly that — prerequisites, downloading the boilerplate, extracting
 it, pointing it at the right repository, proving it runs — and then hands over
 to the `AGENTS.md` that came with the boilerplate.
 
-**It is not documentation of the theme format, and must not become it.** The
+**It is not documentation of the recipe format, and must not become it.** The
 temptation is obvious: the format is defined by this package, so it looks like
 it belongs in this package's skill. But the format is what someone needs while
-*writing* a theme, which is after the handoff, in a project that ships its own
+*writing* a recipe, which is after the handoff, in a project that ships its own
 documentation. A copy here would be a second source of truth read by something
 that acts without checking.
 
-`SKILL.md` changes when the way a theme project is *obtained* changes — the
+`SKILL.md` changes when the way a recipe project is *obtained* changes — the
 boilerplate it downloads, what has to be installed first, what gets rewritten
 after extraction. Not when the format changes.
 
@@ -58,13 +58,13 @@ convention, not a promise that it has been filled in.
 ```
 resolve the directory   →  creates only the last level; ./a/b/c with no `a` is a typo
 detect the driver       →  laravel-react, or an empty directory to start one in
-fetch the theme         →  zip from GitHub, unpack, read the schema
+fetch the recipe        →  zip from GitHub, unpack, read the schema
 Plan                    →  validate the WHOLE schema against what the driver knows
-checks                  →  the driver's own, plus the ones the theme asked for
+checks                  →  the driver's own, plus the ones the recipe asked for
 workspace               →  mark fullsystem/pre-install, create feat/fullsystem-install
-pre-install             →  what the theme declared
-install                 →  copy the theme's src/ over the project
-post-install            →  what the theme declared
+pre-install             →  what the recipe declared
+install                 →  copy the recipe's src/ over the project
+post-install            →  what the recipe declared
 verify                  →  lint, build, test
 commit, then ask        →  apply to the origin branch, or stay on this one
 ```
@@ -85,19 +85,19 @@ bin/fullsystem          the executable cpx resolves from composer.json "bin"
 src/Application.php     routes the first token: a command, or a path
 src/Commands/           the command
 src/Drivers/            what a kind of project is, and how to work with it
-src/Actions/            what a theme can declare, one handler per action
+src/Actions/            what a recipe can declare, one handler per action
 src/Checks/             what has to be true before anything is written
-src/Install/            copying the theme in, and proving the result works
-src/Themes/             downloading and unpacking a theme
+src/Install/            copying the recipe in, and proving the result works
+src/Recipes/            downloading and unpacking a recipe
 src/Workspace.php       the branch, and how to get back
 tests/fixtures/         the reference schema
 ```
 
 ## Invariants — breaking any of these is a regression
 
-**Phase order belongs to the driver, not the theme.** A theme declares
+**Phase order belongs to the driver, not the recipe.** A recipe declares
 `pre-install` and `post-install` and nothing else. Copying the files and
-verifying the result are the driver's. A theme that could reorder them could
+verifying the result are the driver's. A recipe that could reorder them could
 put the copy before the deletions that clear the way for it. See
 [Plan::PHASES](src/Actions/Plan.php) and the reasoning in
 [Driver](src/Drivers/Driver.php).
@@ -116,12 +116,12 @@ it is what `FakeProcess` replaces.
 **Commands are argument lists, never strings.** Nothing reaches a shell, so
 `migrate; rm -rf /` arrives at artisan as one literal argument and dies there.
 
-**Every value from a theme is `mixed` until proven otherwise.** The schema is
+**Every value from a recipe is `mixed` until proven otherwise.** The schema is
 JSON from someone else's repository. [Parameters](src/Actions/Parameters.php)
 exists for this: `stringList`, `options`, `rejecting`. A handler that assumes a
-shape breaks on the first theme that typed a string where a list belonged.
+shape breaks on the first recipe that typed a string where a list belonged.
 
-**Every path from a theme goes through [SafePath](src/Support/SafePath.php).**
+**Every path from a recipe goes through [SafePath](src/Support/SafePath.php).**
 Archive entries, `remove` entries, the schema's `source`. An archive with one
 bad entry is refused whole rather than unpacked halfway.
 
@@ -141,23 +141,23 @@ obey as a flag.
 [ActionRegistry](src/Actions/ActionRegistry.php) discovers handlers by
 interface, not by filename — which is why `Action.php` and `Plan.php` can live
 in the same directory without being mistaken for handlers. After that, the
-driver still has to list the action in `actions()`, or no theme can declare it.
+driver still has to list the action in `actions()`, or no recipe can declare it.
 
 **A new driver** implements [Driver](src/Drivers/Driver.php) and is registered
 in `DriverRegistry::default()`. A driver that cannot execute an action has to
 **narrow** what it takes from `ActionRegistry::names()` — `laravel-vue` has no
 shadcn to run, and accepting a schema that declares shadcn would hand back a
-project missing the components the theme assumed.
+project missing the components the recipe assumed.
 
 **A new check** implements [Check](src/Checks/Check.php). The driver's
-`checks()` run for every theme; `optionalChecks()` run only when a theme names
+`checks()` run for every recipe; `optionalChecks()` run only when a recipe names
 them in `requires`. `forceable()` decides whether a failure is a verdict or a
 question — false for what the command needs to work at all, true for what
 describes risk.
 
 ## The schema format
 
-What the parser has to accept, summarised. The documentation a theme author
+What the parser has to accept, summarised. The documentation a recipe author
 reads lives in the [fullsystem/starter](https://github.com/fullsystem/starter)
 README — a change to the format has to reach it too.
 
@@ -244,11 +244,11 @@ Testing through `cpx` while developing is not useful: cpx installs the
 published package into its own directory and will not see local changes.
 
 **The tests never touch the network.** `cli()` in [tests/Pest.php](tests/Pest.php)
-builds the Application with `FakeThemeSource` and `FakeProcess`. A new test
+builds the Application with `FakeRecipeSource` and `FakeProcess`. A new test
 that needs the network or a real process is doing the wrong thing.
 
 `tests/fixtures/schema.json` is the reference example of the format — what a
-theme author copies to start from. [tests/SchemaTest.php](tests/SchemaTest.php)
+recipe author copies to start from. [tests/SchemaTest.php](tests/SchemaTest.php)
 keeps it honest: it has to parse, use only actions the driver knows, and
 exercise every one of them. It is deliberately a superset of the starter's own
 schema; the two do not have to match.
@@ -275,19 +275,19 @@ it without having a real reason reads worse.
 Documented in the [README](README.md#caveats), repeated here because they are
 the kind of thing a fresh session reintroduces:
 
-- **A theme deleting what it does not replace.** `remove` and the theme's files
+- **A recipe deleting what it does not replace.** `remove` and the recipe's files
   are not checked against each other. Verification catches it and the rollback
   undoes it, but only after the whole run.
 - **Auth pages have an untyped contract with the backend.** Inertia props,
   wayfinder route names and validation error keys are agreed by convention, not
   by types. Replacing `pages/auth` while keeping Fortify's controllers compiles
   fine and fails at runtime.
-- **Private themes are not supported yet.** A theme that cannot be reached is a
+- **Private recipes are not supported yet.** A recipe that cannot be reached is a
   404 on the archive.
 - **The default branch is a moving target.** The fetch takes whatever `main`
-  holds right now; pinning a theme to a tag is not supported.
+  holds right now; pinning a recipe to a tag is not supported.
 
 The security boundary is in [SECURITY.md](SECURITY.md): none of this protects
-against a theme that should not have been trusted. A theme that can add a
+against a recipe that should not have been trusted. A recipe that can add a
 Composer package can already run code. The guards are there to stop an
 accident, not an attacker.

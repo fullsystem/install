@@ -36,13 +36,13 @@ it('treats anything else as a path for the installer', function (string $token) 
 })->with(['.', '..', './some/project', '/tmp/project', 'my-app']);
 
 it('sends options to the installer', function () {
-    expect(route(['--theme=acme/theme']))->toBe(['install', '--theme=acme/theme'])
-        ->and(route(['-t', 'acme/theme']))->toBe(['install', '-t', 'acme/theme'])
+    expect(route(['--recipe=acme/recipe']))->toBe(['install', '--recipe=acme/recipe'])
+        ->and(route(['-t', 'acme/recipe']))->toBe(['install', '-t', 'acme/recipe'])
         ->and(route(['--help']))->toBe(['install', '--help']);
 });
 
 it('sends a path with its options to the installer', function () {
-    expect(route(['.', '--theme=acme/theme']))->toBe(['install', '.', '--theme=acme/theme']);
+    expect(route(['.', '--recipe=acme/recipe']))->toBe(['install', '.', '--recipe=acme/recipe']);
 });
 
 it('leaves an explicit install invocation alone', function () {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use FullSystem\Install\Recipes\FetchedRecipe;
 use FullSystem\Install\Schema\Schema;
 use FullSystem\Install\Support\Filesystem;
-use FullSystem\Install\Themes\FetchedTheme;
-use Tests\Support\FakeThemeSource;
+use Tests\Support\FakeRecipeSource;
 
 function temps(string $prefix): array
 {
@@ -14,34 +14,34 @@ function temps(string $prefix): array
 
 it('throws the download away when it is done with it', function () {
     $workspace = Filesystem::temporaryDirectory('fullsystem-discard-test-');
-    mkdir($workspace.'/unpacked/theme-main', 0755, true);
-    file_put_contents($workspace.'/theme.zip', 'zip');
+    mkdir($workspace.'/unpacked/recipe-main', 0755, true);
+    file_put_contents($workspace.'/recipe.zip', 'zip');
 
-    $theme = new FetchedTheme(new Schema('acme/theme', '1.0.0', []), $workspace.'/unpacked/theme-main', $workspace);
+    $recipe = new FetchedRecipe(new Schema('acme/recipe', '1.0.0', []), $workspace.'/unpacked/recipe-main', $workspace);
 
-    $theme->discard();
+    $recipe->discard();
 
     expect(is_dir($workspace))->toBeFalse();
 });
 
 it('does nothing when there is no workspace to throw away', function () {
-    $theme = new FetchedTheme(new Schema('acme/theme', '1.0.0', []), tempDirectory());
+    $recipe = new FetchedRecipe(new Schema('acme/recipe', '1.0.0', []), tempDirectory());
 
-    $theme->discard();
+    $recipe->discard();
 })->throwsNoExceptions();
 
 it('leaves nothing behind after a run', function () {
-    $before = temps('fullsystem-theme-');
+    $before = temps('fullsystem-recipe-');
 
-    cli(['path' => laravelProject()], FakeThemeSource::returning());
+    cli(['path' => laravelProject()], FakeRecipeSource::returning());
 
-    expect(temps('fullsystem-theme-'))->toBe($before);
+    expect(temps('fullsystem-recipe-'))->toBe($before);
 });
 
 describe('what earlier runs left behind', function () {
     /**
      * A run killed halfway never reaches its own cleanup, so the sweep is what
-     * keeps the temp directory from collecting a copy of every theme ever
+     * keeps the temp directory from collecting a copy of every recipe ever
      * downloaded.
      */
     it('sweeps directories old enough that nothing could still be using them', function () {

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace FullSystem\Install\Actions;
 
 /**
- * Reading what a theme wrote, without trusting its shape.
+ * Reading what a recipe wrote, without trusting its shape.
  *
  * A schema is JSON from a repository: every value arrives as mixed, and a
- * handler that assumes otherwise breaks on a theme that typed a string where
+ * handler that assumes otherwise breaks on a recipe that typed a string where
  * a list belonged.
  */
 final class Parameters

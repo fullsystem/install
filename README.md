@@ -1,21 +1,20 @@
 # fullsystem/install
 
-Install a theme into a Laravel project.
+Install a recipe into your project.
 
-A theme is a repository: some files that mirror your project root, and a
+A recipe is a repository: some files that mirror your project root, and a
 `schema.json` saying what has to happen for them to work — packages to install,
-files to remove, commands to run. This runs it. To write one of your own, read
-the [fullsystem/starter](https://github.com/fullsystem/starter) README.
+files to remove, commands to run. This runs it.
 
 ```bash
 cpx fullsystem/install
 ```
 
 That installs `fullsystem/starter` into the current directory. To install a
-different theme, or somewhere else:
+different recipe, or somewhere else:
 
 ```bash
-cpx fullsystem/install ../my-app --theme=acme/dashboard
+cpx fullsystem/install ../my-app --recipe=acme/dashboard
 ```
 
 > It deletes files, rewrites migrations and runs commands. Everything happens
@@ -26,12 +25,12 @@ cpx fullsystem/install ../my-app --theme=acme/dashboard
 
 ```
 detect the project      →  laravel-react, or an empty directory to start one in
-fetch the theme         →  download, unpack, read the schema
-checks                  →  what the driver needs, and what the theme requires
+fetch the recipe        →  download, unpack, read the schema
+checks                  →  what the driver needs, and what the recipe requires
 branch                  →  feat/fullsystem-install, off where you are
-pre-install             →  what the theme declares: packages, removals, shadcn
-install                 →  the theme's files land on the project
-post-install            →  what the theme declares: artisan, and so on
+pre-install             →  what the recipe declares: packages, removals, shadcn
+install                 →  the recipe's files land on the project
+post-install            →  what the recipe declares: artisan, and so on
 verify                  →  lint, build, test
 commit, then ask        →  apply it to your branch, or keep it on this one
 ```
@@ -49,7 +48,7 @@ A new project has to be created before fullsystem/starter can go in.
 Run `composer create-project laravel/react-starter-kit` here? [yes]
 ```
 
-Which project is not a guess — the theme declares the driver it was written
+Which project is not a guess — the recipe declares the driver it was written
 for, and the driver knows the command. A directory with something else in it
 is left alone.
 
@@ -57,7 +56,7 @@ is left alone.
 
 The work happens on `feat/fullsystem-install`, branched from wherever you
 were, and is committed there. When it finishes you are standing on that
-branch with the theme installed, so you can run the app and look before
+branch with the recipe installed, so you can run the app and look before
 deciding:
 
 ```
@@ -88,13 +87,13 @@ fullsystem/install` puts the same command on your PATH as `fullsystem`.
 | | |
 |---|---|
 | `<path>` | Directory to install into. Defaults to the current one. Created if its parent exists. |
-| `--theme=<owner/repo>`, `-t` | Theme to install. Defaults to [`fullsystem/starter`](https://github.com/fullsystem/starter). |
+| `--recipe=<owner/repo>`, `-r` | Recipe to install. Defaults to [`fullsystem/starter`](https://github.com/fullsystem/starter). |
 | `--dry-run` | Prints everything that would happen, writes nothing. |
 | `--force` | Answers yes to the risk checks up front. |
 | `-v` | Lets composer, npm and shadcn write to the terminal. Off by default: their output is kept and printed only if something fails. |
 | `--no-interaction`, `-n` | Never asks. Every question resolves to its default. |
 
-## Starting a theme of your own
+## Starting a recipe of your own
 
 Give this URL to Claude, Cursor, or whatever you code with:
 
@@ -102,19 +101,19 @@ Give this URL to Claude, Cursor, or whatever you code with:
 https://raw.githubusercontent.com/fullsystem/install/main/SKILL.md
 ```
 
-[`SKILL.md`](SKILL.md) gets a theme project onto disk and running: it asks
+[`SKILL.md`](SKILL.md) gets a recipe project onto disk and running: it asks
 where the repository will live, checks that composer and npm work, downloads
 the boilerplate, points it at your repository, and proves it starts before
 handing back.
 
-It stops there on purpose. What a theme may declare, and how to build one, is
-documented inside the project it hands you — so it travels with the theme
+It stops there on purpose. What a recipe may declare, and how to build one, is
+documented inside the project it hands you — so it travels with the recipe
 rather than going stale in someone else's README.
 
 ## Caveats
 
-**A theme deleting what it does not replace.** `remove` and the theme's files are not
-checked against each other, so a theme that deletes `resources/js/pages`
+**A recipe deleting what it does not replace.** `remove` and the recipe's files are not
+checked against each other, so a recipe that deletes `resources/js/pages`
 without shipping pages leaves a project that does not build. The verification
 catches it and the rollback undoes it, but only after the whole run.
 
@@ -123,11 +122,11 @@ wayfinder route names and validation error keys are agreed by convention, not
 by types. Replacing `pages/auth` while keeping Fortify's controllers compiles
 fine and fails at runtime.
 
-**Private themes are not supported yet.** A theme you cannot reach is a 404 on
-the archive. Authenticating for exclusive themes is what `login` will be for.
+**Private recipes are not supported yet.** A recipe you cannot reach is a 404 on
+the archive. Authenticating for exclusive recipes is what `login` will be for.
 
 **The default branch is a moving target.** The fetch takes whatever `main`
-holds right now; pinning a theme to a tag is not supported yet.
+holds right now; pinning a recipe to a tag is not supported yet.
 
 **cpx caches the installer.** A run reuses the version it already has until its
 update check fires. `cpx update fullsystem/install` forces it.

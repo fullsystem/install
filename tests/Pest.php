@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use FullSystem\Install\Application;
 use FullSystem\Install\Commands\InstallCommand;
-use FullSystem\Install\Themes\ThemeSource;
+use FullSystem\Install\Recipes\RecipeSource;
 use Symfony\Component\Console\Tester\ApplicationTester;
 use Tests\Support\FakeProcess;
-use Tests\Support\FakeThemeSource;
+use Tests\Support\FakeRecipeSource;
 
 /**
  * Runs the CLI the way cpx does — through the application, not the command —
@@ -73,12 +73,12 @@ function laravelProject(): string
     return $path;
 }
 
-function cli(array $argv = [], ?ThemeSource $themes = null, ?FakeProcess $processes = null): ApplicationTester
+function cli(array $argv = [], ?RecipeSource $recipes = null, ?FakeProcess $processes = null): ApplicationTester
 {
     // Never the real GitHub: tests must not depend on the network, and the
     // command's job here is what it does with the schema, not how it got it.
     $application = new Application(new InstallCommand(
-        $themes ?? FakeThemeSource::returning(),
+        $recipes ?? FakeRecipeSource::returning(),
         $processes ?? new FakeProcess,
     ));
     $application->setAutoExit(false);

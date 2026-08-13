@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace FullSystem\Install\Themes;
+namespace FullSystem\Install\Recipes;
 
 use Stringable;
 
 /**
- * A theme is `owner/repository` and nothing else.
+ * A recipe is `owner/repository` and nothing else.
  *
  * The value goes straight into a URL, so anything that could steer the
  * request somewhere other than the intended repository is refused here,
  * before a request exists.
  */
-final readonly class Theme implements Stringable
+final readonly class Recipe implements Stringable
 {
     private const string PATTERN = '/^[a-z0-9][\w.-]*\/[a-z0-9][\w.-]*$/i';
 
@@ -27,7 +27,7 @@ final readonly class Theme implements Stringable
     public static function fromString(string $name): self
     {
         if (preg_match(self::PATTERN, $name) !== 1) {
-            throw new InvalidTheme("A theme is owner/repository — got: {$name}");
+            throw new InvalidRecipe("A recipe is owner/repository — got: {$name}");
         }
 
         [$owner, $repository] = explode('/', $name);

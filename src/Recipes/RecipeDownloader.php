@@ -2,29 +2,29 @@
 
 declare(strict_types=1);
 
-namespace FullSystem\Install\Themes;
+namespace FullSystem\Install\Recipes;
 
 use CurlHandle;
 use FullSystem\Install\Application;
 
 /**
- * Downloads a theme archive over HTTP.
+ * Downloads a recipe archive over HTTP.
  *
  * Download rather than clone because a request has somewhere to put an
- * Authorization header — which is what exclusive themes will need — and
+ * Authorization header — which is what exclusive recipes will need — and
  * because a credential in a clone URL ends up in the shell history and in the
  * clone's own config.
  */
-final class ThemeDownloader
+final class RecipeDownloader
 {
     private const int CONNECT_TIMEOUT = 15;
 
     private const int TIMEOUT = 120;
 
     /**
-     * @param  array<string, string>  $headers  reserved for authenticated themes
+     * @param  array<string, string>  $headers  reserved for authenticated recipes
      */
-    public function download(Theme $theme, string $to, array $headers = []): void
+    public function download(Recipe $recipe, string $to, array $headers = []): void
     {
         $file = fopen($to, 'wb');
 
@@ -32,7 +32,7 @@ final class ThemeDownloader
             throw new DownloadFailed("Could not write to {$to}.");
         }
 
-        $curl = curl_init($theme->archiveUrl());
+        $curl = curl_init($recipe->archiveUrl());
 
         if ($curl === false) {
             fclose($file);
@@ -52,7 +52,7 @@ final class ThemeDownloader
             fclose($file);
         }
 
-        $this->guard($theme, $ok, $status, $error);
+        $this->guard($recipe, $ok, $status, $error);
     }
 
     /**
@@ -76,18 +76,18 @@ final class ThemeDownloader
         ]);
     }
 
-    private function guard(Theme $theme, bool|string $ok, int $status, string $error): void
+    private function guard(Recipe $recipe, bool|string $ok, int $status, string $error): void
     {
         if ($ok === false) {
             throw new DownloadFailed("Could not reach GitHub: {$error}");
         }
 
         if ($status === 404) {
-            throw new DownloadFailed("No such theme, or it is not public: {$theme}");
+            throw new DownloadFailed("No such recipe, or it is not public: {$recipe}");
         }
 
         if ($status >= 400) {
-            throw new DownloadFailed("GitHub answered {$status} for {$theme}.");
+            throw new DownloadFailed("GitHub answered {$status} for {$recipe}.");
         }
     }
 }

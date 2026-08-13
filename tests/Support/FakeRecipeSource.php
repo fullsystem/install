@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use FullSystem\Install\Recipes\FetchedRecipe;
+use FullSystem\Install\Recipes\RecipeSource;
 use FullSystem\Install\Schema\Schema;
-use FullSystem\Install\Themes\FetchedTheme;
-use FullSystem\Install\Themes\ThemeSource;
 use RuntimeException;
 
 /**
  * Answers with a schema, or throws, without touching the network.
  */
-final class FakeThemeSource implements ThemeSource
+final class FakeRecipeSource implements RecipeSource
 {
     /** @var list<string> */
     public array $asked = [];
@@ -33,9 +33,9 @@ final class FakeThemeSource implements ThemeSource
         return new self(null, $failure);
     }
 
-    public function fetch(string $theme): FetchedTheme
+    public function fetch(string $recipe): FetchedRecipe
     {
-        $this->asked[] = $theme;
+        $this->asked[] = $recipe;
 
         if ($this->failure !== null) {
             throw $this->failure;
@@ -44,21 +44,21 @@ final class FakeThemeSource implements ThemeSource
         /** @var Schema $schema */
         $schema = $this->schema;
 
-        return new FetchedTheme($schema, $this->directory ?? self::emptyTheme($schema->source));
+        return new FetchedRecipe($schema, $this->directory ?? self::emptyRecipe($schema->source));
     }
 
     /**
-     * A theme directory with one file, so the install phase has something to
+     * A recipe directory with one file, so the install phase has something to
      * copy when the test does not care what.
      */
-    private static function emptyTheme(string $source): string
+    private static function emptyRecipe(string $source): string
     {
         // Not the production prefix: a test asserting the real one leaves
         // nothing behind should not be measuring the fake's own leftovers.
-        $path = sys_get_temp_dir().'/fullsystem-faketheme-'.bin2hex(random_bytes(6));
+        $path = sys_get_temp_dir().'/fullsystem-fakerecipe-'.bin2hex(random_bytes(6));
 
         mkdir($path.'/'.$source.'/resources/js', 0755, true);
-        file_put_contents($path.'/'.$source.'/resources/js/app.tsx', '// from the theme');
+        file_put_contents($path.'/'.$source.'/resources/js/app.tsx', '// from the recipe');
 
         register_shutdown_function(static fn () => is_dir($path) && exec('rm -rf '.escapeshellarg($path)));
 
