@@ -10,7 +10,7 @@ files to remove, commands to run. This runs it.
 cpx fullsystem/install
 ```
 
-That installs `fullsystem/starter` into the current directory. To install a
+That installs `fullsystem/starter-kit` into the current directory. To install a
 different recipe, or somewhere else:
 
 ```bash
@@ -43,7 +43,7 @@ Point it at an empty directory and it offers to create one first:
 
 ```
 ./app is empty.
-A new project has to be created before fullsystem/starter can go in.
+A new project has to be created before fullsystem/starter-kit can go in.
 
 Run `composer create-project laravel/react-starter-kit` here? [yes]
 ```
@@ -87,7 +87,7 @@ fullsystem/install` puts the same command on your PATH as `fullsystem`.
 | | |
 |---|---|
 | `<path>` | Directory to install into. Defaults to the current one. Created if its parent exists. |
-| `--recipe=<owner/repo>`, `-r` | Recipe to install. Defaults to [`fullsystem/starter`](https://github.com/fullsystem/starter). |
+| `--recipe=<owner/repo>`, `-r` | Recipe to install. Defaults to [`fullsystem/starter-kit`](https://github.com/fullsystem/starter-kit). |
 | `--dry-run` | Prints everything that would happen, writes nothing. |
 | `--force` | Answers yes to the risk checks up front. |
 | `-v` | Lets composer, npm and shadcn write to the terminal. Off by default: their output is kept and printed only if something fails. |

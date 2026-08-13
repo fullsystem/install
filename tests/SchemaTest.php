@@ -21,7 +21,7 @@ describe('the reference schema', function () {
     it('is valid json a recipe could ship', function () {
         $schema = Schema::fromFile(referenceSchema());
 
-        expect($schema->name)->toBe('fullsystem/starter')
+        expect($schema->name)->toBe('fullsystem/starter-kit')
             ->and($schema->version)->toBe('0.1.0')
             ->and($schema->driver)->toBe('laravel-react')
             ->and($schema->source)->toBe(Schema::DEFAULT_SOURCE);

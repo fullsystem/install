@@ -6,16 +6,16 @@ use FullSystem\Install\Recipes\InvalidRecipe;
 use FullSystem\Install\Recipes\Recipe;
 
 it('parses owner/repo', function () {
-    $recipe = Recipe::fromString('fullsystem/starter');
+    $recipe = Recipe::fromString('fullsystem/starter-kit');
 
     expect($recipe->owner)->toBe('fullsystem')
-        ->and($recipe->repository)->toBe('starter')
-        ->and((string) $recipe)->toBe('fullsystem/starter');
+        ->and($recipe->repository)->toBe('starter-kit')
+        ->and((string) $recipe)->toBe('fullsystem/starter-kit');
 });
 
 it('builds the archive url for the default branch', function () {
-    expect(Recipe::fromString('fullsystem/starter')->archiveUrl())
-        ->toBe('https://github.com/fullsystem/starter/archive/refs/heads/main.zip');
+    expect(Recipe::fromString('fullsystem/starter-kit')->archiveUrl())
+        ->toBe('https://github.com/fullsystem/starter-kit/archive/refs/heads/main.zip');
 });
 
 it('accepts the names real repositories use', function (string $name) {
@@ -36,11 +36,11 @@ it('refuses anything that is not owner/repo', function (string $name) {
 })->throws(InvalidRecipe::class)->with([
     '',
     'starter',
-    'fullsystem/starter/extra',
+    'fullsystem/starter-kit/extra',
     '../../etc/passwd',
     'https://evil.test/repo',
-    'fullsystem/starter?ref=x',
-    'fullsystem/starter#fragment',
+    'fullsystem/starter-kit?ref=x',
+    'fullsystem/starter-kit#fragment',
     'full system/starter',
     '-flag/repo',
     'fullsystem/../other',

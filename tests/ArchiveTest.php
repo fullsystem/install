@@ -29,21 +29,21 @@ function zipWith(array $entries): string
 
 it('extracts into the destination and returns the archive root', function () {
     $zip = zipWith([
-        'starter-main/schema.json' => '{"name":"fullsystem/starter"}',
-        'starter-main/stubs/routes/web.php' => '<?php',
+        'starter-kit-main/schema.json' => '{"name":"fullsystem/starter-kit"}',
+        'starter-kit-main/stubs/routes/web.php' => '<?php',
     ]);
 
     $root = Archive::extract($zip, tempDirectory());
 
-    expect(basename($root))->toBe('starter-main')
-        ->and(file_get_contents($root.'/schema.json'))->toBe('{"name":"fullsystem/starter"}')
+    expect(basename($root))->toBe('starter-kit-main')
+        ->and(file_get_contents($root.'/schema.json'))->toBe('{"name":"fullsystem/starter-kit"}')
         ->and(is_file($root.'/stubs/routes/web.php'))->toBeTrue();
 });
 
 describe('zip slip', function () {
     it('refuses an entry climbing out of the destination', function () {
         $zip = zipWith([
-            'starter-main/schema.json' => '{}',
+            'starter-kit-main/schema.json' => '{}',
             '../../../../tmp/fullsystem-pwned' => 'owned',
         ]);
 
@@ -57,8 +57,8 @@ describe('zip slip', function () {
     it('writes nothing at all when one entry is unsafe', function () {
         $into = tempDirectory();
         $zip = zipWith([
-            'starter-main/schema.json' => '{}',
-            'starter-main/../../escape' => 'owned',
+            'starter-kit-main/schema.json' => '{}',
+            'starter-kit-main/../../escape' => 'owned',
         ]);
 
         try {

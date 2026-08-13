@@ -86,16 +86,16 @@ Send them to the one that matches what is actually missing.
 A recipe project starts as a copy of one that already works:
 
 ```bash
-curl -fsSL -o /tmp/fullsystem-recipe.zip https://github.com/fullsystem/starter/archive/refs/heads/main.zip
+curl -fsSL -o /tmp/fullsystem-recipe.zip https://github.com/fullsystem/starter-kit/archive/refs/heads/main.zip
 unzip -q /tmp/fullsystem-recipe.zip -d /tmp/fullsystem-recipe
-cp -R /tmp/fullsystem-recipe/starter-main/. .
+cp -R /tmp/fullsystem-recipe/starter-kit-main/. .
 rm -rf /tmp/fullsystem-recipe /tmp/fullsystem-recipe.zip
 ```
 
 Two things that go wrong here if nobody says them:
 
 - GitHub wraps the contents of every archive in one top-level folder named
-  `<repo>-<ref>`, so this unpacks as `starter-main/`. **That wrapper is not part
+  `<repo>-<ref>`, so this unpacks as `starter-kit-main/`. **That wrapper is not part
   of the project** — what belongs in the working directory is what is inside it.
 - `cp -R <source>/. <target>` is deliberate. It copies hidden files, and
   `.gitignore` is one of them.

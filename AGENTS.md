@@ -12,7 +12,7 @@ a branch, and any failure puts the project back where it started. Nothing is
 ever pushed.
 
 The default recipe it installs,
-[`fullsystem/starter`](https://github.com/fullsystem/starter), lives in a
+[`fullsystem/starter-kit`](https://github.com/fullsystem/starter-kit), lives in a
 separate repository and documents itself there — questions about what a recipe
 contains, rather than what the command does with one, are answered by its
 README and its `AGENTS.md`.
@@ -158,7 +158,7 @@ describes risk.
 ## The schema format
 
 What the parser has to accept, summarised. The documentation a recipe author
-reads lives in the [fullsystem/starter](https://github.com/fullsystem/starter)
+reads lives in the [fullsystem/starter-kit](https://github.com/fullsystem/starter-kit)
 README — a change to the format has to reach it too.
 
 ```json

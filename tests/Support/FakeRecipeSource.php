@@ -25,7 +25,7 @@ final class FakeRecipeSource implements RecipeSource
 
     public static function returning(?Schema $schema = null, ?string $directory = null): self
     {
-        return new self($schema ?? new Schema('fullsystem/starter', '1.0.0', []), null, $directory);
+        return new self($schema ?? new Schema('fullsystem/starter-kit', '1.0.0', []), null, $directory);
     }
 
     public static function failing(RuntimeException $failure): self

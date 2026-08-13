@@ -1,5 +1,5 @@
 {
-  "name": "fullsystem/starter",
+  "name": "fullsystem/starter-kit",
   "version": "0.1.0",
   "driver": "laravel-react",
   "requires": [

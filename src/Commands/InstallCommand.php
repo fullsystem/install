@@ -52,7 +52,7 @@ use function Laravel\Prompts\spin;
 )]
 final class InstallCommand
 {
-    public const string DEFAULT_RECIPE = 'fullsystem/starter';
+    public const string DEFAULT_RECIPE = 'fullsystem/starter-kit';
 
     public function __construct(
         private readonly RecipeSource $recipes = new GitHubSource,

@@ -15,7 +15,7 @@ it('still answers to the init alias', function () {
     expect($tester->getStatusCode())->toBe(Command::SUCCESS);
 });
 
-it('installs fullsystem/starter by default', function () {
+it('installs fullsystem/starter-kit by default', function () {
     expect(cli(['path' => laravelProject()])->getDisplay())
         ->toContain(InstallCommand::DEFAULT_RECIPE);
 });
