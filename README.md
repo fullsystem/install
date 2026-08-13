@@ -101,21 +101,21 @@ root:
 ```
 acme/dashboard
 ├── schema.json
-└── source/
+└── src/
     ├── app/Models/User.php
     ├── resources/js/app.tsx
     └── routes/web.php
 ```
 
-`source/resources/js/app.tsx` lands at `resources/js/app.tsx`. No path mapping.
-Anything outside `source/` — README, licence, CI config — stays in the theme.
+`src/resources/js/app.tsx` lands at `resources/js/app.tsx`. No path mapping.
+Anything outside it — README, licence, CI config — stays in the theme. `src` is
+the default; a theme that keeps its files elsewhere says so with `source`.
 
 ```json
 {
   "name": "acme/dashboard",
   "version": "1.0.0",
   "driver": "laravel-react",
-  "source": "source",
   "requires": ["fresh-project"],
   "phases": {
     "pre-install": [
@@ -153,7 +153,7 @@ Each item names exactly one action; any other key is a modifier of it, which
 is what makes `{ "composer": [...], "dev": true }` read the way it does.
 
 You declare `pre-install` and `post-install`. The two phases in between —
-copying `source/` over the project, and verifying the result — belong to the
+copying the theme's files over the project, and verifying the result — belong to the
 driver: a theme that could reorder them could put the copy before the
 deletions that clear the way for it.
 
@@ -206,7 +206,7 @@ None of this protects you from a theme you should not have trusted — see
 
 ## Caveats
 
-**A theme deleting what it does not replace.** `remove` and `source/` are not
+**A theme deleting what it does not replace.** `remove` and the theme's files are not
 checked against each other, so a theme that deletes `resources/js/pages`
 without shipping pages leaves a project that does not build. The verification
 catches it and the rollback undoes it, but only after the whole run.

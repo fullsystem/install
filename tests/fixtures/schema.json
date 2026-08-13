@@ -2,7 +2,6 @@
   "name": "fullsystem/starter",
   "version": "0.1.0",
   "driver": "laravel-react",
-  "source": "source",
   "requires": [
     "fresh-project"
   ],
