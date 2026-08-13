@@ -1,6 +1,6 @@
 ---
 name: fullsystem-recipe
-description: Set up a new recipe project for fullsystem/install — ask where it will live, check that composer and npm work, download the boilerplate, extract it, fill in the org and repo it belongs to, put it under git, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how recipes work. Use when someone wants to start a new recipe, or points at this file.
+description: Set up a new recipe project for fullsystem/install — ask where it will live and what it is for, check that composer and npm work, download the boilerplate, extract it, fill in the org and repo it belongs to, write it a README of its own, put it under git, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how recipes work. Use when someone wants to start a new recipe, or points at this file.
 ---
 
 # Setting up a new recipe project
@@ -12,22 +12,35 @@ The boilerplate you are about to download ships an `AGENTS.md` that knows what a
 recipe is, what it may declare, and how to build one. It takes over at the end of
 this file. Do not anticipate it, and do not improvise what it covers.
 
-Six things happen, and then you hand over.
+Seven things happen, and then you hand over.
 
-## 1. Ask where the project will live
+## 1. Ask two things
 
-> Which GitHub organisation and repository will this recipe live in?
+Ask both together, in one message, before anything is downloaded. Finding out
+afterwards means going back over files you already touched.
+
+> **1. Which GitHub organisation and repository will this recipe live in?**
 
 Take an **org** and a **repo** separately. Both are GitHub names: letters,
 digits, hyphens, underscores and dots, not starting with a hyphen. A personal
 account is a valid org — `xpto/my-recipe` is as good an answer as
 `acme/dashboard`.
 
-Ask now, because step 4 needs both, and finding out after everything is on disk
-means going back over files you already touched.
+If they do not know yet, that is a fine answer. Say that the placeholders stay
+in the documentation until someone fills them in, and carry on.
 
-**If they do not know yet**, that is a fine answer. Say that the placeholders
-stay in the documentation until someone fills them in, and carry on.
+> **2. What is this recipe for?**
+
+What kind of application it is meant to produce, what it should bring with it,
+who would install it. A sentence is enough; a paragraph is better.
+
+You are not designing the recipe from this — that comes later, and it is
+`AGENTS.md` that explains how. You are asking because step 5 writes the README,
+and a README written without knowing what the thing is ends up describing the
+example it was copied from.
+
+If they would rather get to it later, take what they have and say the README is
+a placeholder until they tell you more.
 
 ## 2. Composer and npm have to work
 
@@ -142,7 +155,29 @@ Then run the same search again and **show the user what is left**. Everything
 that remains should be one of those explanatory sentences. Anything else is a
 broken URL you are about to hand over as finished.
 
-## 5. Give it a repository
+## 5. Make the README describe this recipe
+
+The README you extracted describes the boilerplate's own example — the packages
+it happens to declare, the frontend it happens to ship. Left alone, it is a
+project whose front page is about somebody else's work.
+
+Rewrite it from the answer to question 2. What this recipe is for, what it
+brings, who would install it. Keep the parts that are true of any recipe — how
+it is installed, that the installer works on a branch and rolls back — and
+replace everything that was describing the example.
+
+**Do not let it promise what the schema does not do.** `schema.json` still
+declares the boilerplate's packages and commands, and a README announcing one
+thing while the recipe installs another is worse than the stale one you started
+from. Either say plainly that the recipe is not written yet, or say what the
+schema actually declares. Which of those it becomes is the next conversation,
+and it belongs to `AGENTS.md`.
+
+If they had nothing to tell you yet, say so in the README itself rather than
+leaving the example in place. "This recipe does not do anything yet" is honest;
+a description of reverb and horizon that nobody chose is not.
+
+## 6. Give it a repository
 
 This directory is the code that goes to the repository from step 1. Treat it as
 that, and if it is not a git repository yet, make it one — without asking. A
@@ -155,7 +190,8 @@ git add -A
 git commit -m "chore: start <org>/<repo>"
 ```
 
-After step 4, so the first commit already has the placeholders filled.
+After steps 4 and 5, so the first commit already has the placeholders filled and
+a README that describes this recipe.
 
 **The repository almost certainly does not exist on GitHub yet.** That is
 normal, it is not a problem, and it is not something to raise. Do not create it,
@@ -172,7 +208,7 @@ git remote add origin git@github.com:<org>/<repo>.git
 If the directory is already a repository, leave its setup alone: commit what you
 added and say which branch they are on.
 
-## 6. Prove it runs
+## 7. Prove it runs
 
 Find out that it works here — this machine, these versions — while a failure
 still has exactly one possible cause.
@@ -204,7 +240,7 @@ connect back to you.
 If it does not come up, say what failed and what the output was. Do not hand
 over a project you never saw working.
 
-## 7. Hand over to `AGENTS.md`
+## 8. Hand over to `AGENTS.md`
 
 The project is on disk, it is pointed at the right repository, and it runs.
 Your part is finished.
