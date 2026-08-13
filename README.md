@@ -4,7 +4,8 @@ Install a theme into a Laravel project.
 
 A theme is a repository: some files that mirror your project root, and a
 `schema.json` saying what has to happen for them to work — packages to install,
-files to remove, commands to run. This runs it.
+files to remove, commands to run. This runs it. To write one of your own, read
+the [fullsystem/starter](https://github.com/fullsystem/starter) README.
 
 ```bash
 cpx fullsystem/install
@@ -14,7 +15,7 @@ That installs `fullsystem/starter` into the current directory. To install a
 different theme, or somewhere else:
 
 ```bash
-cpx fullsystem/install ~/code/my-app --theme=acme/dashboard
+cpx fullsystem/install ../my-app --theme=acme/dashboard
 ```
 
 > It deletes files, rewrites migrations and runs commands. Everything happens
@@ -87,122 +88,28 @@ fullsystem/install` puts the same command on your PATH as `fullsystem`.
 | | |
 |---|---|
 | `<path>` | Directory to install into. Defaults to the current one. Created if its parent exists. |
-| `--theme=<owner/repo>`, `-t` | Theme to install. Defaults to `fullsystem/starter`. |
+| `--theme=<owner/repo>`, `-t` | Theme to install. Defaults to [`fullsystem/starter`](https://github.com/fullsystem/starter). |
 | `--dry-run` | Prints everything that would happen, writes nothing. |
 | `--force` | Answers yes to the risk checks up front. |
 | `-v` | Lets composer, npm and shadcn write to the terminal. Off by default: their output is kept and printed only if something fails. |
 | `--no-interaction`, `-n` | Never asks. Every question resolves to its default. |
 
-## Writing a theme
+## Starting a theme of your own
 
-A `schema.json` in the root, and a directory of files that mirrors the project
-root:
+Give this URL to Claude, Cursor, or whatever you code with:
 
 ```
-acme/dashboard
-├── schema.json
-└── src/
-    ├── app/Models/User.php
-    ├── resources/js/app.tsx
-    └── routes/web.php
+https://raw.githubusercontent.com/fullsystem/install/main/SKILL.md
 ```
 
-`src/resources/js/app.tsx` lands at `resources/js/app.tsx`. No path mapping.
-Anything outside it — README, licence, CI config — stays in the theme. `src` is
-the default; a theme that keeps its files elsewhere says so with `source`.
+[`SKILL.md`](SKILL.md) gets a theme project onto disk and running: it asks
+where the repository will live, checks that composer and npm work, downloads
+the boilerplate, points it at your repository, and proves it starts before
+handing back.
 
-```json
-{
-  "name": "acme/dashboard",
-  "version": "1.0.0",
-  "driver": "laravel-react",
-  "requires": ["fresh-project"],
-  "phases": {
-    "pre-install": [
-      { "composer": ["laravel/reverb", "intervention/image"] },
-      { "composer": ["pestphp/pest"], "dev": true },
-      { "packages": ["@laravel/echo-react", "date-fns"] },
-      { "remove": ["resources/js/pages", "routes/web.php"] },
-      { "shadcn": { "preset": "vega", "components": "all", "pointer": true } }
-    ],
-    "post-install": [
-      { "artisan": ["wayfinder:generate --with-form"] }
-    ]
-  }
-}
-```
-
-`tests/fixtures/schema.json` in this repository is the same thing, kept honest
-by tests: it has to parse, use only actions the driver knows, and exercise
-every one of them.
-
-### Phases
-
-A phase is a **list**, so the same action can appear more than once and the
-order is the order you wrote:
-
-```json
-"pre-install": [
-  { "remove": ["routes/web.php"] },
-  { "composer": ["acme/router"] },
-  { "remove": ["config/router.php"] }
-]
-```
-
-Each item names exactly one action; any other key is a modifier of it, which
-is what makes `{ "composer": [...], "dev": true }` read the way it does.
-
-You declare `pre-install` and `post-install`. The two phases in between —
-copying the theme's files over the project, and verifying the result — belong to the
-driver: a theme that could reorder them could put the copy before the
-deletions that clear the way for it.
-
-### Actions
-
-| action | parameters | what it does |
-|---|---|---|
-| `composer` | list of packages | `composer require`, with `"dev": true` for require-dev |
-| `packages` | list of packages | installs JS dependencies with whichever manager the project's lockfile says — npm, pnpm, yarn or bun |
-| `remove` | list of paths | deletes them, relative to the project root |
-| `shadcn` | `preset`, `base`, `template`, `components`, `pointer` | `shadcn init` then `add` |
-| `artisan` | list of commands | `php artisan …` |
-
-An action the driver does not know is refused before anything runs, and the
-error says what it does know.
-
-### requires
-
-Some conditions belong to the theme rather than the environment. A theme that
-rewrites the users migration needs a project nobody has built on; one that
-only adds a module would never pass that check and should not be asked to.
-
-| check | fails when |
-|---|---|
-| `fresh-project` | more than one commit, the starter kit pages are gone, or there are models besides `User` |
-
-A failing check of this kind is a question, not a verdict: it says what it saw
-and asks whether to continue. `--force` answers yes in advance, which is also
-what happens where there is no terminal to ask in.
-
-### What is not allowed
-
-The installer runs what a theme declares, so what it will not run is worth
-knowing:
-
-- **Commands are argument lists, never strings.** Nothing reaches a shell, so
-  `migrate; rm -rf /` arrives at artisan as one literal argument and dies
-  there.
-- **Package names are checked for shape.** Not against a shell — there is
-  none — but against a "package" called `--ignore-platform-reqs`, which
-  composer would obey as a flag.
-- **Paths cannot leave the project.** `remove` entries and archive entries
-  alike; an archive with one bad entry is refused whole rather than unpacked
-  halfway.
-- **Some artisan commands are refused outright**: `db:wipe`, `migrate:fresh`,
-  `migrate:reset`, `migrate:rollback`.
-
-None of this protects you from a theme you should not have trusted — see
-[SECURITY.md](SECURITY.md) for where that line is.
+It stops there on purpose. What a theme may declare, and how to build one, is
+documented inside the project it hands you — so it travels with the theme
+rather than going stale in someone else's README.
 
 ## Caveats
 
@@ -236,66 +143,9 @@ composer install
 PHP 8.3+ and Composer are all you need to work on the command itself. Node is
 only required to run it against a real project.
 
-### Running it
-
-The command acts on the directory it is called from, not the one it lives in,
-so point it at a throwaway project rather than at the package:
-
-```bash
-php ~/code/fullsystem/install/bin/fullsystem ~/tmp/app --dry-run
-```
-
-Testing through `cpx` is not useful while developing: cpx installs the
-published package into its own directory and will not see your changes.
-
-### Checks
-
-```bash
-composer test
-```
-
-Runs the three below in order, and is exactly what CI runs.
-
-| | |
-|---|---|
-| `composer analyse` | PHPStan, level 6, over `src` |
-| `composer lint` | Pint, applies the fixes |
-| `composer lint:check` | Pint, fails instead of fixing |
-| `composer test:unit` | Pest |
-
-A single test while you work on it:
-
-```bash
-vendor/bin/pest --filter="rolls the project back"
-```
-
-### Layout
-
-```
-bin/fullsystem          the executable cpx resolves from composer.json "bin"
-src/Application.php     routes the first token: a command, or a path
-src/Commands/           the command
-src/Drivers/            what a kind of project is, and how to work with it
-src/Actions/            what a theme can declare, one handler per action
-src/Checks/             what has to be true before anything is written
-src/Install/            copying the theme in, and proving the result works
-src/Themes/             downloading and unpacking a theme
-src/Workspace.php       the branch, and how to get back
-tests/fixtures/         the reference schema
-```
-
-Adding an action is one file in `src/Actions/`: implement `Handler`, and the
-registry finds it.
-
-Nothing in `src/` runs a process directly — handlers take a `ProcessRunner`,
-which is what keeps the suite from installing packages on whoever runs it.
-
-### Conventions
-
-Strict types everywhere, `final` by default, Pint's Laravel preset. Do not
-override `ordered_imports` in `pint.json`: combined with the preset's
-`blank_line_between_import_groups` it never converges, and `composer test`
-fails on a file Pint just formatted.
+How the code is laid out, how to run it against a project, what the checks are
+and what the conventions expect is in [AGENTS.md](AGENTS.md) — written for the
+assistant you will be contributing with, and just as readable without one.
 
 ## License
 

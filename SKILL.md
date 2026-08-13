@@ -1,0 +1,171 @@
+---
+name: fullsystem-theme
+description: Set up a new theme project for fullsystem/install — ask where it will live, check that composer and npm work, download the boilerplate, extract it, point it at the new repository, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how themes work. Use when someone wants to start a new theme, or points at this file.
+---
+
+# Setting up a new theme project
+
+You are getting a theme project onto disk and running. That is the whole job.
+
+**You are not learning the theme format here, and you are not writing a theme.**
+The boilerplate you are about to download ships an `AGENTS.md` that knows what a
+theme is, what it may declare, and how to build one. It takes over at the end of
+this file. Do not anticipate it, and do not improvise what it covers.
+
+Five things happen, and then you hand over.
+
+## 1. Ask where the project will live
+
+> Which GitHub organisation and repository will this theme live in?
+
+Take an **org** and a **repo** separately. Both are GitHub names: letters,
+digits, hyphens, underscores and dots, not starting with a hyphen. A personal
+account is a valid org — `xpto/my-theme` is as good an answer as
+`acme/dashboard`.
+
+Ask now, because step 4 needs both, and finding out after everything is on disk
+means going back over files you already touched.
+
+**If they do not know yet**, that is a fine answer. Say that the placeholders
+stay in the documentation until someone fills them in, and carry on.
+
+## 2. Composer and npm have to work
+
+Both are required. Check before downloading anything — a project extracted onto
+a machine that cannot run it is worse than no project, because it looks like
+progress.
+
+```bash
+composer --version
+npm --version
+```
+
+Both answering is the whole requirement. Composer answering means PHP is there
+and working; npm answering means Node is. A version number you can read is
+better evidence than a `command -v` that only proves a file exists.
+
+### If one of them is missing
+
+**Ask first.** Installing a language runtime changes the user's machine outside
+this project, and it is not yours to decide. Say which one is missing, what you
+propose to run, and wait for a yes. Never install anything on a maybe.
+
+If they agree, you may attempt it **only** where a package manager is already
+present and does not need a password:
+
+| platform | attempt |
+|---|---|
+| macOS with Homebrew | `brew install composer`, `brew install node` |
+| anywhere else | do not attempt — send them to the documentation below |
+
+Do not install Homebrew, or any other package manager, to satisfy this. That is
+a far larger change to someone's machine than they agreed to, and agreeing to
+"install npm" is not agreeing to it.
+
+**You cannot type a password.** If a command asks for one — anything through
+`sudo`, most Linux package managers, every Windows installer — stop there and
+hand the command to the user to run themselves. Do not retry it, and do not look
+for a way around the prompt.
+
+### When you cannot install it
+
+Say which one is missing, what you tried, and what it said. Then point at the
+documentation and stop. Do not download the project: an install that
+half-worked is harder to diagnose than one that never started.
+
+| missing | where to send them |
+|---|---|
+| Composer | https://getcomposer.org/download/ |
+| Node and npm | https://nodejs.org/en/download |
+| both, on macOS or Windows | https://herd.laravel.com — one installer, aimed at people who do not want to assemble a PHP toolchain by hand |
+
+Send them to the one that matches what is actually missing.
+
+## 3. Download the boilerplate and extract it
+
+A theme project starts as a copy of one that already works:
+
+```bash
+curl -fsSL -o /tmp/fullsystem-theme.zip https://github.com/fullsystem/starter/archive/refs/heads/main.zip
+unzip -q /tmp/fullsystem-theme.zip -d /tmp/fullsystem-theme
+cp -R /tmp/fullsystem-theme/starter-main/. .
+rm -rf /tmp/fullsystem-theme /tmp/fullsystem-theme.zip
+```
+
+Two things that go wrong here if nobody says them:
+
+- GitHub wraps the contents of every archive in one top-level folder named
+  `<repo>-<ref>`, so this unpacks as `starter-main/`. **That wrapper is not part
+  of the project** — what belongs in the working directory is what is inside it.
+- `cp -R <source>/. <target>` is deliberate. It copies hidden files, and
+  `.gitignore` is one of them.
+
+Confirm `AGENTS.md` is at the root of the working directory before going on. If
+it is not, the extraction did not land where you think it did.
+
+## 4. Point it at the new repository
+
+What you extracted still refers to the repository it came from. Two different
+fixes, and doing only the first is the common mistake.
+
+**The documentation carries placeholders.** `{org}` and `{repo}` appear where
+the repository is named — the install URL in `README.md` above all. Replace both
+with the answers from step 1. It is a search and replace with no judgement in
+it: do not go hunting for other mentions of the source repository. If a string
+is meant to change, it is a placeholder.
+
+**`SKILL.md` carries a literal URL**, because a skill loaded from a raw URL has
+to be able to download the repository it belongs to. Point that URL at the new
+repository. A theme whose skill fetches somebody else's theme is broken in a way
+nobody notices until it has already set up the wrong thing.
+
+Leave alone, in that same file, the sentences that *discuss* `{org}` and
+`{repo}`. They are talking about the placeholders, not using them, and rewriting
+those turns the instructions into nonsense.
+
+Then confirm no `{org}` or `{repo}` survives anywhere it was meant to change.
+
+## 5. Prove it runs
+
+Find out that it works here — this machine, these versions — while a failure
+still has exactly one possible cause.
+
+```bash
+composer install
+```
+
+It has to finish clean. If it does not, stop and report it: a dependency that
+will not install is not something to hand over.
+
+Then start it the way the project itself says to, which is `composer dev` unless
+its `composer.json` says otherwise. **Read what that script actually runs before
+you run it** — it is usually several processes at once, a server and a bundler
+and often a queue worker, and what it binds to is declared there rather than
+here.
+
+**`composer dev` does not exit.** That is what it is for, and it is the trap:
+
+- start it in the background, never in the foreground where it blocks
+- give it a few seconds, then check the application answers on the address it
+  reported
+- **stop it, and confirm it stopped**
+
+Leaving it running is not untidiness. The port stays held after this session
+ends, and the next thing that tries to bind fails for a reason nobody will
+connect back to you.
+
+If it does not come up, say what failed and what the output was. Do not hand
+over a project you never saw working.
+
+## 6. Hand over to `AGENTS.md`
+
+The project is on disk, it is pointed at the right repository, and it runs.
+Your part is finished.
+
+`AGENTS.md` in the working directory is what knows how themes work — the format,
+what a theme may declare, what the installer refuses, how to build and test one.
+**Read it now**, and work from it rather than from anything you assumed while
+reading this file.
+
+If the user has not said what they want the theme to do yet, that is the
+conversation to have next — and `AGENTS.md` is what tells you how to have it.
