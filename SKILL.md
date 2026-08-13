@@ -1,6 +1,6 @@
 ---
 name: fullsystem-recipe
-description: Set up a new recipe project for fullsystem/install — ask where it will live, check that composer and npm work, download the boilerplate, extract it, point it at the new repository, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how recipes work. Use when someone wants to start a new recipe, or points at this file.
+description: Set up a new recipe project for fullsystem/install — ask where it will live, check that composer and npm work, download the boilerplate, extract it, fill in the org and repo it belongs to, put it under git, and prove it runs. Then hand over to the AGENTS.md that came with it, which is what knows how recipes work. Use when someone wants to start a new recipe, or points at this file.
 ---
 
 # Setting up a new recipe project
@@ -12,7 +12,7 @@ The boilerplate you are about to download ships an `AGENTS.md` that knows what a
 recipe is, what it may declare, and how to build one. It takes over at the end of
 this file. Do not anticipate it, and do not improvise what it covers.
 
-Five things happen, and then you hand over.
+Six things happen, and then you hand over.
 
 ## 1. Ask where the project will live
 
@@ -142,7 +142,37 @@ Then run the same search again and **show the user what is left**. Everything
 that remains should be one of those explanatory sentences. Anything else is a
 broken URL you are about to hand over as finished.
 
-## 5. Prove it runs
+## 5. Give it a repository
+
+If the directory is not a git repository yet, make it one. The next thing
+anybody does here is change files, and a project with no history is a project
+nobody can undo.
+
+```bash
+git init
+git add -A
+git commit -m "chore: start <org>/<repo>"
+```
+
+Do it **after** step 4, so the first commit has the placeholders already filled
+and nobody has to go looking for when that happened.
+
+**Do not add a remote, and do not create the repository on GitHub.** You were
+told where this will live, not asked to put it there — and a push is not
+something to do on somebody's behalf.
+
+What you can do is hand them the command, built from the answers to step 1 and
+ready to paste once they have created it:
+
+```bash
+git remote add origin git@github.com:<org>/<repo>.git
+```
+
+If the directory is already a repository — someone ran `git init` before calling
+you, or it was tracked already — leave its setup alone. Commit what you added,
+and say which branch they are on.
+
+## 6. Prove it runs
 
 Find out that it works here — this machine, these versions — while a failure
 still has exactly one possible cause.
@@ -174,7 +204,7 @@ connect back to you.
 If it does not come up, say what failed and what the output was. Do not hand
 over a project you never saw working.
 
-## 6. Hand over to `AGENTS.md`
+## 7. Hand over to `AGENTS.md`
 
 The project is on disk, it is pointed at the right repository, and it runs.
 Your part is finished.
