@@ -9,10 +9,6 @@ it('runs the installer when no command is given', function () {
     expect(cli(['path' => laravelProject()])->getDisplay())->toContain('fullsystem/install');
 });
 
-it('warns that the package is under development', function () {
-    expect(cli(['path' => laravelProject()])->getDisplay())->toContain('Under development');
-});
-
 it('still answers to the init alias', function () {
     $tester = cli(['command' => 'init', 'path' => laravelProject()]);
 

@@ -39,7 +39,6 @@ use function Laravel\Prompts\intro;
 use function Laravel\Prompts\note;
 use function Laravel\Prompts\outro;
 use function Laravel\Prompts\spin;
-use function Laravel\Prompts\warning;
 
 /**
  * `install|init` registers the alias in the same place as the name.
@@ -81,8 +80,6 @@ final class InstallCommand
         Prompt::interactive($input->isInteractive() && stream_isatty(STDIN));
 
         intro('fullsystem/install');
-
-        warning('Under development. Expect breaking changes between versions.');
 
         $cwd = $this->directory($path, $dryRun, $output);
 
