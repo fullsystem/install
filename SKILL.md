@@ -144,9 +144,10 @@ broken URL you are about to hand over as finished.
 
 ## 5. Give it a repository
 
-If the directory is not a git repository yet, make it one. The next thing
-anybody does here is change files, and a project with no history is a project
-nobody can undo.
+This directory is the code that goes to the repository from step 1. Treat it as
+that, and if it is not a git repository yet, make it one — without asking. A
+project with no history is one where the next change cannot be undone, and that
+is not a decision worth a question.
 
 ```bash
 git init
@@ -154,23 +155,22 @@ git add -A
 git commit -m "chore: start <org>/<repo>"
 ```
 
-Do it **after** step 4, so the first commit has the placeholders already filled
-and nobody has to go looking for when that happened.
+After step 4, so the first commit already has the placeholders filled.
 
-**Do not add a remote, and do not create the repository on GitHub.** You were
-told where this will live, not asked to put it there — and a push is not
-something to do on somebody's behalf.
+**The repository almost certainly does not exist on GitHub yet.** That is
+normal, it is not a problem, and it is not something to raise. Do not create it,
+do not add a remote, and do not ask whether to — putting code into somebody's
+account is theirs to do, and there is nothing here that needs it done.
 
-What you can do is hand them the command, built from the answers to step 1 and
-ready to paste once they have created it:
+Give them the command once, when you hand over, so it is there when they want
+it:
 
 ```bash
 git remote add origin git@github.com:<org>/<repo>.git
 ```
 
-If the directory is already a repository — someone ran `git init` before calling
-you, or it was tracked already — leave its setup alone. Commit what you added,
-and say which branch they are on.
+If the directory is already a repository, leave its setup alone: commit what you
+added and say which branch they are on.
 
 ## 6. Prove it runs
 
