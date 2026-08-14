@@ -9,16 +9,17 @@ You are putting a recipe project on disk and running its boot. That is the whole
 job, and it is deliberately small.
 
 **You know almost nothing about what you are downloading**, and you must not act
-as though you do. The boilerplate ships two files this relies on and no others:
+as though you do. Two files are all this cares about:
 
 | | |
 |---|---|
-| `BOOT.md` | The installation, written by people who know what is in the archive. You run it; you do not second-guess it. |
-| `AGENTS.md` | Whoever works in the project after the boot. Not your concern until the boot is done. |
+| `BOOT.md` | **Optional.** The installation, written by people who know what is in the archive. If it is there you run it; if it is not, there was nothing to run. |
+| `AGENTS.md` | Whoever works in the project once the boot is done. Not your concern until then. |
 
 Whether the archive also holds a README, a `composer.json`, a test suite, a
 frontend or none of those is not yours to assume, to check for, or to work
-around.
+around. Some boilerplates are files and nothing else — copied into place, in the
+right order, done.
 
 Four things happen, and then you are gone.
 
@@ -78,17 +79,20 @@ Two things that go wrong here if nobody says them:
 - `cp -R <source>/. <target>` is deliberate. It copies hidden files, and
   `.gitignore` is one of them.
 
-Then confirm `BOOT.md` is at the root of `<dir>`.
+Then confirm files actually landed in `<dir>`. An empty directory after this
+means the extraction did not go where you think it did — check that before
+anything else.
 
-**No `BOOT.md` means one of two things**, and they are not the same:
+## 3. Run `BOOT.md`, if there is one
 
-- the extraction did not land where you think it did — check, and fix it
-- or this project has already been booted, and you are looking at a finished
-  one. Do not re-run anything. Say so, and go to step 4.
+**No `BOOT.md` means there is nothing to boot.** The archive was files, they are
+in place, and the install is done — go to step 4. Do not go looking for
+something else to run, and do not treat the absence as a problem to report: a
+boilerplate that is only files copied into the right places is a legitimate
+boilerplate, and so is one that has already been booted. Either way the action
+is the same, which is why you do not have to tell them apart.
 
-## 3. Run `BOOT.md`
-
-Read it and do what it says, start to finish.
+When it is there, read it and do what it says, start to finish.
 
 It is the installation: what has to be filled in, what has to be installed, what
 has to be running before any of this is usable. It was written with knowledge of
@@ -103,23 +107,26 @@ that failed loudly.
 
 ## 4. Delete `BOOT.md` and get out of the way
 
-Only when the boot succeeded end to end:
+If you ran one, and only once it succeeded end to end:
 
 ```bash
 rm BOOT.md
 ```
 
 **That deletion is the record.** There is no install log and no marker file — the
-absence of `BOOT.md` is what says this project is installed, and it is what
-stops the next session from booting a project that is already running. Deleting
-it while the boot is unfinished destroys that, so do it once and only on
-success.
+absence of `BOOT.md` is what says the boot is behind us, and it is what stops
+the next session from re-running setup on a project that is already set up.
+Deleting it while the boot is unfinished destroys that, so do it once and only
+on success.
 
-If the boot left the project under git, commit the deletion so the finished
-state is the state on disk and in history alike.
+If the project is under git, commit the deletion, so the finished state is the
+state on disk and in history alike.
+
+If there was no `BOOT.md` to begin with, there is nothing to delete and nothing
+to commit. Carry on.
 
 Then **stop being the installer.** `AGENTS.md` is in charge from here: read it,
-work from it, and treat everything in `BOOT.md` as spent — it described how to
+work from it, and treat anything the boot said as spent — it described how to
 start this project, not how to work in it, and carrying its instructions forward
 is how a session ends up re-running setup on a project that is already set up.
 
