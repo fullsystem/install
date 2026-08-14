@@ -1,26 +1,32 @@
 ---
 name: fullsystem-recipe
-description: Start a new recipe project for fullsystem/install — ask where it will live, download the boilerplate, extract it, fill in the org and repo it belongs to, put it under git, and hand over to the AGENTS.md that came with it, which is what knows the project from there. Use when someone wants to start a new recipe, or points at this file.
+description: Start a new recipe project for fullsystem/install — download the boilerplate, extract it, run the BOOT.md it ships, and delete that file once it succeeds, leaving AGENTS.md in charge of the session. Use when someone wants to start a new recipe, or points at this file.
 ---
 
 # Starting a new recipe project
 
-You are putting a recipe project on disk and handing it over. That is the whole
+You are putting a recipe project on disk and running its boot. That is the whole
 job, and it is deliberately small.
 
 **You know almost nothing about what you are downloading**, and you must not act
-as though you do. The boilerplate ships an `AGENTS.md`; that is the one thing
-this file relies on. Whether it also has a README, a `composer.json`, a test
-suite, a frontend or none of those is not yours to assume, to check for, or to
-work around. `AGENTS.md` knows the project. You get it on disk, name it, and get
-out of the way.
+as though you do. The boilerplate ships two files this relies on and no others:
 
-Four things happen, and then you hand over.
+| | |
+|---|---|
+| `BOOT.md` | The installation, written by people who know what is in the archive. You run it; you do not second-guess it. |
+| `AGENTS.md` | Whoever works in the project after the boot. Not your concern until the boot is done. |
 
-## 1. Ask where it will live
+Whether the archive also holds a README, a `composer.json`, a test suite, a
+frontend or none of those is not yours to assume, to check for, or to work
+around.
 
-**One question at a time, waiting for each.** Two questions in a single message
-read as a form, and forms get answered in a hurry.
+Four things happen, and then you are gone.
+
+## 1. Ask what it will be called
+
+The name decides the folder, which is the only reason you are asking. **One
+question at a time**, waiting for each — two questions in a single message read
+as a form, and forms get answered in a hurry.
 
 > Which GitHub organisation will this recipe live in?
 
@@ -30,11 +36,8 @@ hyphen.
 
 > And what should the repository be called?
 
-Same rules.
-
-If they do not know where it will live yet, that is a fine answer: say the
-placeholders stay in the documentation until someone fills them in, and carry
-on.
+Same rules. Keep both answers — `BOOT.md` is likely to want them, and asking the
+same thing twice is its own kind of rude.
 
 **The directory is usually not a question.** The repository name is the obvious
 folder name, so use `./<repo>` whenever it is free — missing, or empty apart
@@ -64,87 +67,61 @@ rm -rf /tmp/fullsystem-recipe /tmp/fullsystem-recipe.zip
 Everything after this happens inside `<dir>`, so change into it now.
 
 **Do not confuse it with `fullsystem/starter-kit`.** That one is a finished
-recipe — the one the installer reaches for when nobody names another, meant to
-be installed into applications. `fullsystem/recipe` is where a new one begins.
-Different repositories, different jobs.
+recipe — what the installer reaches for when nobody names another, meant to be
+installed into applications. `fullsystem/recipe` is where a new one begins.
 
 Two things that go wrong here if nobody says them:
 
 - GitHub wraps the contents of every archive in one top-level folder named
-  `<repo>-<ref>`, so this unpacks as `recipe-main/`. **That wrapper is not
-  part of the project** — what belongs in `<dir>` is what is inside it.
+  `<repo>-<ref>`, so this unpacks as `recipe-main/`. **That wrapper is not part
+  of the project** — what belongs in `<dir>` is what is inside it.
 - `cp -R <source>/. <target>` is deliberate. It copies hidden files, and
   `.gitignore` is one of them.
 
-Then confirm `AGENTS.md` is at the root of `<dir>`. If it is not, the extraction
-did not land where you think it did — and it is the only file this skill counts
-on, so stop and say so rather than carrying on.
+Then confirm `BOOT.md` is at the root of `<dir>`.
 
-## 3. Fill in the placeholders
+**No `BOOT.md` means one of two things**, and they are not the same:
 
-The boilerplate names no repository. Every place one belongs is written as
-`{org}` and `{repo}`, waiting for the answers from step 1. Handed over unfilled,
-it is a project whose own documentation points at nothing.
+- the extraction did not land where you think it did — check, and fix it
+- or this project has already been booted, and you are looking at a finished
+  one. Do not re-run anything. Say so, and go to step 4.
 
-Find them rather than guessing where they are — which files exist is not
-something you know:
+## 3. Run `BOOT.md`
 
-```bash
-grep -rlF -e '{org}' -e '{repo}' . --exclude-dir=.git
-```
+Read it and do what it says, start to finish.
 
-Replace both in every file that list names. It is a search and replace with no
-judgement in it: do not go hunting for other mentions of where the project came
-from.
+It is the installation: what has to be filled in, what has to be installed, what
+has to be running before any of this is usable. It was written with knowledge of
+the archive that you do not have, so **follow it rather than improving on it**.
+Where it asks for something you already know — the org and repo from step 1 —
+supply it instead of asking again.
 
-The one exception is text that *discusses* the placeholders rather than using
-them — documentation explaining the convention. Rewriting that turns an
-explanation into nonsense.
+**If it fails, stop.** Say which instruction failed and what the output was.
+Leave `BOOT.md` where it is: the project is half-installed, and the file is the
+only thing that says so. A boot that failed and left no trace is worse than one
+that failed loudly.
 
-Then run the search again and **show what is left**. Everything remaining should
-be one of those explanations. Anything else is a broken reference you are about
-to hand over as finished.
+## 4. Delete `BOOT.md` and get out of the way
 
-## 4. Give it a repository
-
-This directory is the code that goes to the repository from step 1. If it is not
-a git repository yet, make it one — without asking. A project with no history is
-one where the next change cannot be undone, and that is not a decision worth a
-question.
+Only when the boot succeeded end to end:
 
 ```bash
-git init
-git add -A
-git commit -m "chore: start <org>/<repo>"
+rm BOOT.md
 ```
 
-After step 3, so the first commit already has the placeholders filled.
+**That deletion is the record.** There is no install log and no marker file — the
+absence of `BOOT.md` is what says this project is installed, and it is what
+stops the next session from booting a project that is already running. Deleting
+it while the boot is unfinished destroys that, so do it once and only on
+success.
 
-**The repository almost certainly does not exist on GitHub yet.** That is
-normal, it is not a problem, and it is not something to raise. Do not create it,
-do not add a remote, and do not ask whether to — putting code into somebody's
-account is theirs to do.
+If the boot left the project under git, commit the deletion so the finished
+state is the state on disk and in history alike.
 
-Give them the command once, at the handover, so it is there when they want it:
+Then **stop being the installer.** `AGENTS.md` is in charge from here: read it,
+work from it, and treat everything in `BOOT.md` as spent — it described how to
+start this project, not how to work in it, and carrying its instructions forward
+is how a session ends up re-running setup on a project that is already set up.
 
-```bash
-git remote add origin git@github.com:<org>/<repo>.git
-```
-
-If the directory is already a repository, leave its setup alone: commit what you
-added and say which branch they are on.
-
-## 5. Hand over to `AGENTS.md`
-
-The project is on disk, it carries its own name, and it is under git. **Your
-part is finished.**
-
-Read `AGENTS.md` now and do what it says. It is what knows this project: what a
-recipe is, what belongs in it, what has to be installed or run, and what to ask
-the user next. Everything you might be tempted to do here — set up dependencies,
-start something, write documentation, decide what the recipe should contain —
-is on the other side of that file, and doing it from here means doing it from
-assumptions.
-
-If `AGENTS.md` asks for something the machine does not have, that is the moment
-to find out, and its instructions are what say how to handle it.
+If the user has not said what they want to build yet, that is the conversation
+to have next, and `AGENTS.md` is what tells you how to have it here.
